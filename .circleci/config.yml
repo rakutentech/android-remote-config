@@ -70,6 +70,21 @@ jobs:
     - run:
         name: Publish
         command: ./gradlew publish
+    - run:
+        name: Publish documentation
+        command: |
+          set -e
+          ./gradlew generatePublishableDocs
+          if [[ ! $CIRCLE_TAG == *"-"* ]]; then
+            git checkout gh-pages
+            cp -R remote-config/build/publishableDocs/docs/. ./docs
+            cp -R remote-config/build/publishableDocs/_versions/. ./_versions
+            git add docs _versions
+            git commit -m "Publish documentation for $CIRCLE_TAG"
+            git push origin gh-pages
+          else
+            echo "Documentation not published for snapshot version"
+          fi
 
 workflows:
   version: 2

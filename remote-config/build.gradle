@@ -33,10 +33,4 @@ dependencies {
   testImplementation 'org.awaitility:awaitility-kotlin:3.1.6'
 }
 
-apply plugin: 'org.jetbrains.dokka-android'
-def docsBuildDirectory = "$buildDir/kdocs"
-dokka {
-  outputFormat = 'markdown'
-  outputDirectory = "$docsBuildDirectory"
-  includeNonPublic = false
-}
+apply from: '../gradle/documentation.gradle'
