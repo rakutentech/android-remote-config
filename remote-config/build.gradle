@@ -34,3 +34,15 @@ dependencies {
 }
 
 apply from: '../gradle/documentation.gradle'
+
+apply from: '../gradle/maven-publication.gradle'
+publishing {
+  publications {
+    RemoteConfig(MavenPublication, androidArtifact())
+  }
+}
+
+apply from: '../gradle/publish.gradle'
+bintray {
+  publications = ['RemoteConfig']
+}

@@ -68,10 +68,10 @@ jobs:
         name: Current Version
         command: ./gradlew cV
     - run:
-        name: Publish
+        name: Publish Artifacts
         command: ./gradlew publish
     - run:
-        name: Publish documentation
+        name: Publish Documentation
         command: |
           set -e
           ./gradlew generatePublishableDocs

@@ -17,6 +17,7 @@ buildscript {
     classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:0.9.18"
     classpath 'pl.allegro.tech.build:axion-release-plugin:1.8.1'
     classpath 'digital.wup:android-maven-publish:3.6.2'
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
   }
 }
 
