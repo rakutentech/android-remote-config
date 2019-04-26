@@ -80,6 +80,8 @@ jobs:
             cp -R remote-config/build/publishableDocs/docs/. ./docs
             cp -R remote-config/build/publishableDocs/_versions/. ./_versions
             git add docs _versions
+            git config user.name "CI Publisher"
+            git config user.email "dev-opensource@mail.rakuten.com"
             git commit -m "Publish documentation for $CIRCLE_TAG"
             git push origin gh-pages
           else
