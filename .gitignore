@@ -92,3 +92,6 @@ modules.xml
 *.ipr
 
 /config/
+
+# Jekyll
+/_site/
