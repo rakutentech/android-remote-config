@@ -42,7 +42,10 @@ publishing {
   }
 }
 
-apply from: '../gradle/publish.gradle'
-bintray {
-  publications = ['RemoteConfig']
+def isSnapshot = project.version.contains('-')
+if (isSnapshot) {
+  apply from: '../gradle/artifactory.gradle'
+} else {
+  apply from: '../gradle/bintray.gradle'
 }
+
