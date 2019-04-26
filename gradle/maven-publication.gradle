@@ -1,0 +1,36 @@
+apply plugin: 'digital.wup.android-maven-publish'
+
+task sourceJar(type: Jar) {
+  from android.sourceSets.main.kotlin.srcDirs
+  archiveClassifier = 'sources'
+}
+
+task kdocJar(type: Jar, dependsOn: dokka) {
+  from dokka.outputDirectory
+  archiveClassifier = 'kdoc'
+}
+
+ext.androidArtifact = { Map config ->
+  return {
+    from components.android
+    artifact sourceJar
+    artifact kdocJar
+    pom {
+      name = project.name
+      description = project.description
+      groupId project.group
+      artifactId project.name
+      version project.version
+      url = project.url
+      licenses {
+        license {
+          name = project.licenseName
+          url = project.licenseUrl
+        }
+      }
+      scm {
+        url = project.scmUrl
+      }
+    }
+  }
+}

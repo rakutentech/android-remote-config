@@ -1,0 +1,22 @@
+apply from: '../config/android/application.gradle'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+  defaultConfig {
+    applicationId "com.rakuten.tech.mobile.remoteconfig.sample"
+    versionCode 1
+    versionName "1.0"
+  }
+
+  sourceSets.each {
+    it.java.srcDirs += "src/$it.name/kotlin"
+  }
+}
+
+dependencies {
+  implementation 'androidx.appcompat:appcompat:1.1.0-alpha01'
+  implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$CONFIG.versions.kotlin"
+  implementation project(':remote-config')
+}

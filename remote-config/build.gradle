@@ -1,0 +1,48 @@
+apply from: '../config/android/library.gradle'
+apply plugin: "kotlin-android"
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'kotlinx-serialization'
+
+android {
+  sourceSets.each {
+    it.java.srcDirs += "src/$it.name/kotlin"
+  }
+
+  testOptions {
+    unitTests {
+      includeAndroidResources = true
+    }
+  }
+}
+
+dependencies {
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$CONFIG.versions.kotlin"
+  implementation 'com.squareup.retrofit2:retrofit:2.5.0'
+  implementation 'androidx.annotation:annotation:1.0.1'
+  implementation "com.rakuten.tech.mobile:manifest-config-annotations:0.1.0"
+  kapt "com.rakuten.tech.mobile:manifest-config-processor:0.1.0"
+  implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.10.0"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1"
+
+  testImplementation 'junit:junit:4.12'
+  testImplementation 'org.robolectric:robolectric:3.8'
+  testImplementation "org.amshove.kluent:kluent-android:1.48"
+  testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
+  testImplementation "com.squareup.okhttp3:mockwebserver:3.14.0"
+  testImplementation 'org.awaitility:awaitility-kotlin:3.1.6'
+}
+
+apply from: '../gradle/documentation.gradle'
+
+apply from: '../gradle/maven-publication.gradle'
+publishing {
+  publications {
+    RemoteConfig(MavenPublication, androidArtifact())
+  }
+}
+
+apply from: '../gradle/publish.gradle'
+bintray {
+  publications = ['RemoteConfig']
+}
