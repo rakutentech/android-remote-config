@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/rakutentech/android-remote-config.svg?style=svg)](https://circleci.com/gh/rakutentech/android-remote-config)
+
 # Remote Config SDK for Android
 
 Provides remote configuration for Android applications. See the [User Guide](./remote-config/USERGUIDE.md) for instructions on implementing in an android application.
