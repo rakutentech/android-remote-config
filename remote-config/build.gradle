@@ -49,3 +49,7 @@ if (isSnapshot) {
   apply from: '../gradle/bintray.gradle'
 }
 
+apply from: "../config/quality/jacoco/android.gradle"
+jacoco {
+  toolVersion = "0.8.3"
+}
