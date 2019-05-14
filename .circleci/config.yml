@@ -38,6 +38,9 @@ jobs:
     - run:
         name: Current Version
         command: ./gradlew currentVersion
+    - run:
+        name: Upload Code Coverage
+        command: bash <(curl -s https://codecov.io/bash)
     - store_artifacts:
         path: remote-config/build/reports
         destination: reports/

@@ -1,4 +1,5 @@
 [![CircleCI](https://circleci.com/gh/rakutentech/android-remote-config.svg?style=svg)](https://circleci.com/gh/rakutentech/android-remote-config)
+[![codecov](https://codecov.io/gh/rakutentech/android-remote-config/branch/master/graph/badge.svg)](https://codecov.io/gh/rakutentech/android-remote-config)
 
 # Remote Config SDK for Android
 
