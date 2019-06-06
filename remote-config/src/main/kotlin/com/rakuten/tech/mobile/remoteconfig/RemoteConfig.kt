@@ -7,6 +7,16 @@ package com.rakuten.tech.mobile.remoteconfig
 @Suppress("UnnecessaryAbstractClass")
 abstract class RemoteConfig internal constructor() {
 
+    /**
+     * Get a string from the Cached config.
+     * If the key does not exist, [fallback] will be returned.
+     *
+     * @param key returns value for this key in the config
+     * @param fallback returned when the key does not exist
+     * @return String value for the specified key
+     */
+    abstract fun getString(key: String, fallback: String): String
+
     companion object {
         private var instance: RemoteConfig = NotInitialzedRemoteConfig()
 
@@ -24,4 +34,7 @@ abstract class RemoteConfig internal constructor() {
     }
 }
 
-internal class NotInitialzedRemoteConfig : RemoteConfig()
+internal class NotInitialzedRemoteConfig : RemoteConfig() {
+
+    override fun getString(key: String, fallback: String) = fallback
+}
