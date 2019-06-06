@@ -1,10 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<layout
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
   tools:ignore="HardcodedText"
   tools:context=".MainActivity">
+  <data>
+    <variable
+      name="activity"
+      type="com.rakuten.tech.mobile.remoteconfig.sample.MainActivity"/>
+  </data>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+  <androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_margin="20dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+      android:id="@+id/key"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="Key"/>
+    <EditText
+      android:id="@+id/fallback"
+      app:layout_constraintTop_toBottomOf="@+id/key"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="Fallback Value"/>
+    <Button
+      android:id="@+id/stringButton"
+      app:layout_constraintTop_toBottomOf="@+id/fallback"
+      android:textStyle="bold"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:onClick="@{() -> activity.onGetStringClick()}"
+      android:text="Get String"/>
+
+  </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

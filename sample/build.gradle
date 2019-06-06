@@ -3,14 +3,28 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
+  def property = { key ->
+    return System.getenv(key) ?: (project.hasProperty(key) ? project."$key" : null)
+  }
+
   defaultConfig {
     applicationId "com.rakuten.tech.mobile.remoteconfig.sample"
     versionCode 1
     versionName "1.0"
+
+    manifestPlaceholders = [
+            appId: property("REMOTE_CONFIG_APP_ID") ?: "",
+            subscriptionKey: property("REMOTE_CONFIG_SUBSCRIPTION_KEY") ?: "",
+            baseUrl: property("REMOTE_CONFIG_BASE_URL") ?: "https://www.example.com/"
+    ]
   }
 
   sourceSets.each {
     it.java.srcDirs += "src/$it.name/kotlin"
+  }
+
+  dataBinding {
+    enabled = true
   }
 }
 

@@ -13,6 +13,18 @@
     android:networkSecurityConfig="@xml/network_security_config"
     tools:ignore="GoogleAppIndexingWarning">
 
+    <meta-data
+      android:name="com.rakuten.tech.mobile.remoteconfig.BaseUrl"
+      android:value="${baseUrl}" />
+
+    <meta-data
+      android:name="com.rakuten.tech.mobile.relay.AppId"
+      android:value="${appId}" />
+
+    <meta-data
+      android:name="com.rakuten.tech.mobile.relay.SubscriptionKey"
+      android:value="${subscriptionKey}" />
+
     <activity android:name=".MainActivity">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
