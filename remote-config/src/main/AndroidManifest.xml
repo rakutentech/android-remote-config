@@ -5,5 +5,11 @@
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-  <application />
+  <application>
+    <provider
+      android:name="com.rakuten.tech.mobile.remoteconfig.RemoteConfigInitProvider"
+      android:authorities="${applicationId}.RemoteConfigInitProvider"
+      android:exported="false"
+      android:initOrder="99" />
+  </application>
 </manifest>
