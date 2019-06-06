@@ -40,7 +40,16 @@ class RemoteConfigInitProvider : ContentProvider() {
     override fun onCreate(): Boolean {
         val context = context ?: return false
 
-        RemoteConfig.init()
+        val manifestConfig = AppManifestConfig(context)
+
+        val fetcher = ConfigFetcher(
+            manifestConfig.baseUrl(),
+            manifestConfig.appId(),
+            manifestConfig.subscriptionKey()
+        )
+        val cache = ConfigCache(context, fetcher)
+
+        RemoteConfig.init(cache)
 
         return true
     }
@@ -65,5 +74,4 @@ class RemoteConfigInitProvider : ContentProvider() {
     override fun getType(uri: Uri): String? = null
 
     override fun insert(uri: Uri, values: ContentValues?): Uri? = null
-
 }

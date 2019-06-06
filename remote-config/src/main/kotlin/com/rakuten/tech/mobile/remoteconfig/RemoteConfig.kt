@@ -18,13 +18,10 @@ abstract class RemoteConfig internal constructor() {
         @JvmStatic
         fun instance(): RemoteConfig = instance
 
-        internal fun init() {
-            instance = RealRemoteConfig()
+        internal fun init(cache: ConfigCache) {
+            instance = RealRemoteConfig(cache)
         }
-
     }
 }
 
-internal class NotInitialzedRemoteConfig: RemoteConfig() {
-
-}
+internal class NotInitialzedRemoteConfig : RemoteConfig()
