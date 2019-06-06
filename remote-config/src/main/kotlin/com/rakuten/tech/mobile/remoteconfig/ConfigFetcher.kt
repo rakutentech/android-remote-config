@@ -8,7 +8,6 @@ import okhttp3.Request
 import java.io.IOException
 import java.lang.IllegalArgumentException
 
-@Suppress("UndocumentedPublicFunction")
 internal class ConfigFetcher(
     baseUrl: String,
     appId: String,

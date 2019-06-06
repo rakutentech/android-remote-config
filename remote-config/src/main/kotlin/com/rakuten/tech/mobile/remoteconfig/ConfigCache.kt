@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
 
-@Suppress("TooGenericExceptionCaught", "UndocumentedPublicFunction")
+@Suppress("TooGenericExceptionCaught")
 internal class ConfigCache @VisibleForTesting constructor(
     fetcher: ConfigFetcher,
     file: File
