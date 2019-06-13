@@ -28,8 +28,9 @@ internal class ConfigFetcher(
         val response = client.newCall(buildFetchRequest())
             .execute()
 
-        if (!response.isSuccessful)
+        if (!response.isSuccessful) {
             throw IOException("Unexpected response when fetching remote config: $response")
+        }
 
         val body = response.body()!!.string() // Body is never null if request is successful
 

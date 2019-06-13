@@ -3,8 +3,6 @@ package com.rakuten.tech.mobile.remoteconfig
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
 import org.amshove.kluent.*
-import org.awaitility.kotlin.await
-import org.awaitility.kotlin.until
 import org.junit.Test
 import org.robolectric.RuntimeEnvironment
 import java.io.File
@@ -14,6 +12,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
 
     private val context = RuntimeEnvironment.application.applicationContext
     private val stubFetcher: ConfigFetcher = mock()
+    private val stubPoller: AsyncPoller = mock()
 
     @Test
     fun `should be empty by default`() {
@@ -54,16 +53,11 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
             configValues = hashMapOf("foo" to "bar")
         )
 
-        var exceptionThrown = false
         When calling stubFetcher.fetch() doAnswer {
-            exceptionThrown = true
             throw IOException("Failed.")
         }
 
-        ConfigCache(stubFetcher, createFile(fileName))
-        await until { exceptionThrown }
-
-        val cache = ConfigCache(stubFetcher, createFile(fileName))
+        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller)
 
         cache["foo"] shouldEqual "bar"
     }
@@ -72,14 +66,12 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         configValues: Map<String, String> = hashMapOf("testKey" to "test_value"),
         fileName: String = "cache.json"
     ): ConfigCache {
-        val file = File(context.filesDir, fileName)
         When calling stubFetcher.fetch() itReturns configValues
+        When calling stubPoller.start(any()) itAnswers {
+            (it.arguments[0] as () -> Any).invoke()
+        }
 
-        val cache = ConfigCache(stubFetcher, createFile(fileName))
-
-        await until { file.exists() && file.readText().isNotBlank() }
-
-        return cache
+        return ConfigCache(stubFetcher, createFile(fileName), stubPoller)
     }
 
     private fun createFile(name: String) = File(context.filesDir, name)
