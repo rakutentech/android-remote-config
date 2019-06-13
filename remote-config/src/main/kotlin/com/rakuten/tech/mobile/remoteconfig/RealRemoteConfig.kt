@@ -1,5 +1,8 @@
 package com.rakuten.tech.mobile.remoteconfig
 
-class RealRemoteConfig {
-    fun test() = true
+internal class RealRemoteConfig(
+    private val cache: ConfigCache
+) : RemoteConfig() {
+
+    override fun getString(key: String, fallback: String) = cache[key] ?: fallback
 }
