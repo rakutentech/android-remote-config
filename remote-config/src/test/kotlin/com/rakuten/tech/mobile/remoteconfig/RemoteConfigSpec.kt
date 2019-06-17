@@ -19,4 +19,22 @@ class RemoteConfigSpec {
         RemoteConfig.instance()
             .getString("test_key", "fallback_value") shouldEqual "fallback_value"
     }
+
+    @Test
+    fun `should return fallback boolean when not initialized`() {
+        RemoteConfig.instance()
+            .getBoolean("test_key", true) shouldEqual true
+    }
+
+    @Test
+    fun `should return fallback number when not initialized`() {
+        RemoteConfig.instance()
+            .getNumber("test_key", 10) shouldEqual 10
+    }
+
+    @Test
+    fun `should return empty map when not initialized`() {
+        RemoteConfig.instance()
+            .getConfig() shouldEqual emptyMap()
+    }
 }

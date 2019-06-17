@@ -24,9 +24,11 @@ internal class ConfigCache @VisibleForTesting constructor(
     )
 
     private val json = if (file.exists()) file.readText() else ""
-    private val config = if (json.isNotBlank())
+    private val config = if (json.isNotBlank()) {
         Config.fromJsonString(json)
-    else Config(hashMapOf())
+    } else {
+        Config(emptyMap())
+    }
 
     init {
         poller.start {
@@ -42,6 +44,8 @@ internal class ConfigCache @VisibleForTesting constructor(
     }
 
     operator fun get(key: String) = config.values[key]
+
+    fun getConfig(): Map<String, String> = config.values
 
     companion object {
         const val DELAY_IN_MINUTES: Int = 60
