@@ -1,0 +1,17 @@
+markdown: kramdown
+plugins:
+  - github-pages
+
+title: Remote Config SDK for Android
+description: Provides remote configuration for Android applications.
+repository: rakutentech/android-remote-config
+docs_path: docs
+api_docs_path: api
+
+collections: 
+  versions:
+layouts_dir: theme/_layouts
+sass:
+  sass_dir: theme/_sass
+css_file: theme/css/main.css
+includes_dir: theme/_includes
