@@ -13,13 +13,16 @@ import org.amshove.kluent.shouldStartWith
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.robolectric.RuntimeEnvironment
+import java.io.File
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.LogManager
 
-class ConfigFetcherSpec {
+class ConfigFetcherSpec : RobolectricBaseSpec() {
 
     private val server = MockWebServer()
+    private val context = RuntimeEnvironment.application
     private lateinit var baseUrl: String
 
     init {
@@ -91,6 +94,29 @@ class ConfigFetcherSpec {
         server.takeRequest().headers["apiKey"] shouldEqual "ras-test_subscription_key"
     }
 
+    @Test
+    fun `should return cached config for 304 response code`() {
+        val fetcher = createFetcher()
+        enqueueResponseValues(hashMapOf("foo" to "bar"))
+        server.enqueue(MockResponse().setResponseCode(304))
+
+        fetcher.fetch()
+
+        fetcher.fetch()["foo"] shouldEqual "bar"
+    }
+
+    @Test
+    fun `should cache the config between App launches`() {
+        enqueueResponseValues(hashMapOf("foo" to "bar"))
+        server.enqueue(MockResponse().setResponseCode(304))
+
+        createFetcher(cacheDirectory = context.cacheDir)
+            .fetch()
+
+        createFetcher(cacheDirectory = context.cacheDir)
+            .fetch()["foo"] shouldEqual "bar"
+    }
+
     @Test(expected = Exception::class)
     fun `should throw when an invalid base url is provided`() {
         enqueueResponseValues()
@@ -146,19 +172,27 @@ class ConfigFetcherSpec {
         values: Map<String, String> = hashMapOf("foo" to "bar")
     ) {
         server.enqueue(
-            MockResponse().setBody("""
+            MockResponse()
+                .setBody("""
                 {
                     "body": ${Json.nonstrict.stringify(
                         (StringSerializer to StringSerializer).map, values
                     )}
                 }
             """.trimIndent())
+                .setHeader("etag", "test")
         )
     }
 
     private fun createFetcher(
         url: String = baseUrl,
         appId: String = "test_app_id",
-        subscriptionKey: String = "test_subscription_key"
-    ) = ConfigFetcher(url, appId, subscriptionKey)
+        subscriptionKey: String = "test_subscription_key",
+        cacheDirectory: File = context.cacheDir
+    ) = ConfigFetcher(
+        baseUrl = url,
+        appId = appId,
+        subscriptionKey = subscriptionKey,
+        cacheDirectory = cacheDirectory
+    )
 }
