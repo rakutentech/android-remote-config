@@ -2,19 +2,24 @@ package com.rakuten.tech.mobile.remoteconfig
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.Cache
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.File
 import java.io.IOException
 import java.lang.IllegalArgumentException
 
 internal class ConfigFetcher(
     baseUrl: String,
     appId: String,
-    private val subscriptionKey: String
+    private val subscriptionKey: String,
+    cacheDirectory: File
 ) {
 
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .cache(Cache(cacheDirectory, CACHE_SIZE))
+        .build()
     private val requestUrl = try {
         HttpUrl.get(baseUrl)
             .newBuilder()
@@ -41,6 +46,10 @@ internal class ConfigFetcher(
             .url(requestUrl)
             .addHeader("apiKey", "ras-$subscriptionKey")
             .build()
+
+    companion object {
+        private const val CACHE_SIZE = 1024 * 1024 * 2L
+    }
 }
 
 @Serializable
