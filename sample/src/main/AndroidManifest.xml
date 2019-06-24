@@ -18,11 +18,11 @@
       android:value="${baseUrl}" />
 
     <meta-data
-      android:name="com.rakuten.tech.mobile.relay.AppId"
+      android:name="com.rakuten.tech.mobile.ras.AppId"
       android:value="${appId}" />
 
     <meta-data
-      android:name="com.rakuten.tech.mobile.relay.SubscriptionKey"
+      android:name="com.rakuten.tech.mobile.ras.ProjectSubscriptionKey"
       android:value="${subscriptionKey}" />
 
     <activity android:name=".MainActivity">

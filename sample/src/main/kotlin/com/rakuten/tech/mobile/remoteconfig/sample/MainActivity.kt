@@ -2,14 +2,22 @@ package com.rakuten.tech.mobile.remoteconfig.sample
 
 import android.os.Bundle
 import android.widget.Toast
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.rakuten.tech.mobile.remoteconfig.RemoteConfig
 import com.rakuten.tech.mobile.remoteconfig.sample.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity() {
+class MainActivity @VisibleForTesting constructor(
+    private val remoteConfig: RemoteConfig
+) : AppCompatActivity() {
+
+    constructor(): this(RemoteConfig.instance())
 
     private lateinit var binding: ActivityMainBinding
+
+    private val key get() = binding.key.text.toString()
+    private val fallback get() = binding.fallback.text.toString()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,19 +27,26 @@ class MainActivity : AppCompatActivity() {
         binding.activity = this
     }
 
-    fun onGetStringClick() {
-        val key = binding.key.text.toString()
-        val fallback = binding.fallback.text.toString()
+    fun onGetStringClick() = showToast(key, remoteConfig.getString(key, fallback))
 
-        val value = RemoteConfig.instance().getString(key, fallback)
+    fun onGetBooleanClick() = showToast(key, remoteConfig.getBoolean(key, fallback.toBoolean()))
 
-        showToast("$key = $value")
-    }
+    fun onGetLongClick() = showToast(key, remoteConfig.getNumber(key, fallback.toLong()))
 
-    private fun showToast(message: String) {
+    fun onGetShortClick() = showToast(key, remoteConfig.getNumber(key, fallback.toShort()))
+
+    fun onGetDoubleClick() = showToast(key, remoteConfig.getNumber(key, fallback.toDouble()))
+
+    fun onGetFloatClick() = showToast(key, remoteConfig.getNumber(key, fallback.toFloat()))
+
+    fun onGetIntClick() = showToast(key, remoteConfig.getNumber(key, fallback.toInt()))
+
+    fun onGetByteClick() = showToast(key, remoteConfig.getNumber(key, fallback.toByte()))
+
+    private fun showToast(key: String, value: Any) {
         Toast.makeText(
             this,
-            message,
+            "$key = $value",
             Toast.LENGTH_SHORT
         ).show()
     }

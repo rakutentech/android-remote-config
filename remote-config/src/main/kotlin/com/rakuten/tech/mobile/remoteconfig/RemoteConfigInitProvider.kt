@@ -27,13 +27,13 @@ class RemoteConfigInitProvider : ContentProvider() {
         /**
          * App Id assigned to this App.
          **/
-        @MetaData(key = "com.rakuten.tech.mobile.relay.AppId")
+        @MetaData(key = "com.rakuten.tech.mobile.ras.AppId")
         fun appId(): String
 
         /**
          * Subscription Key for the Remote Config API.
          **/
-        @MetaData(key = "com.rakuten.tech.mobile.relay.SubscriptionKey")
+        @MetaData(key = "com.rakuten.tech.mobile.ras.ProjectSubscriptionKey")
         fun subscriptionKey(): String
     }
 
