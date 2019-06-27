@@ -1,11 +1,10 @@
+[![Download](https://api.bintray.com/packages/ssed-oss-jcenter/ssed-mobile-libs/android-remote-config/images/download.svg)](https://bintray.com/ssed-oss-jcenter/ssed-mobile-libs/android-remote-config/_latestVersion)
 [![CircleCI](https://circleci.com/gh/rakutentech/android-remote-config.svg?style=svg)](https://circleci.com/gh/rakutentech/android-remote-config)
 [![codecov](https://codecov.io/gh/rakutentech/android-remote-config/branch/master/graph/badge.svg)](https://codecov.io/gh/rakutentech/android-remote-config)
 
 # Remote Config SDK for Android
 
 Provides remote configuration for Android applications. See the [User Guide](./remote-config/USERGUIDE.md) for instructions on implementing in an android application.
-
-## How it works
 
 ## How to build
 
