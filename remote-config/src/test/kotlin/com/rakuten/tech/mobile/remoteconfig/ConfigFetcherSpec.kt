@@ -90,6 +90,20 @@ class ConfigFetcherSpec : RobolectricBaseSpec() {
     }
 
     @Test
+    fun `should attach ETag value to subsequent requests as If-None-Match`() {
+        val fetcher = createFetcher()
+        enqueueResponseValues(etag = "etag_value")
+        enqueueResponseValues()
+
+        fetcher.fetch()
+        server.takeRequest()
+
+        fetcher.fetch()
+
+        server.takeRequest().headers.get("If-None-Match") shouldEqual "etag_value"
+    }
+
+    @Test
     fun `should return cached config for 304 response code`() {
         val fetcher = createFetcher()
         enqueueResponseValues(hashMapOf("foo" to "bar"))
@@ -157,7 +171,8 @@ class ConfigFetcherSpec : RobolectricBaseSpec() {
     }
 
     private fun enqueueResponseValues(
-        values: Map<String, String> = hashMapOf("foo" to "bar")
+        values: Map<String, String> = hashMapOf("foo" to "bar"),
+        etag: String = "etag_value"
     ) {
         server.enqueue(
             MockResponse()
@@ -168,7 +183,7 @@ class ConfigFetcherSpec : RobolectricBaseSpec() {
                     )}
                 }
             """.trimIndent())
-                .setHeader("etag", "test")
+                .setHeader("ETag", etag)
         )
     }
 
