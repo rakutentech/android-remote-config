@@ -23,9 +23,8 @@ internal class ConfigCache @VisibleForTesting constructor(
         AsyncPoller(DELAY_IN_MINUTES)
     )
 
-    private val json = if (file.exists()) file.readText() else ""
-    private val config = if (json.isNotBlank()) {
-        Config.fromJsonString(json)
+    private val config = if (file.exists()) {
+        Config.fromJsonString(file.readText())
     } else {
         Config(emptyMap())
     }
