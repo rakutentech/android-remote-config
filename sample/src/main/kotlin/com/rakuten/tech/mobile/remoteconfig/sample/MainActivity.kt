@@ -43,6 +43,8 @@ class MainActivity @VisibleForTesting constructor(
 
     fun onGetByteClick() = showToast(key, remoteConfig.getNumber(key, fallback.toByte()))
 
+    fun onGetConfigClick() = showToast("Config", remoteConfig.getConfig())
+
     private fun showToast(key: String, value: Any) {
         Toast.makeText(
             this,

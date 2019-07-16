@@ -12,18 +12,19 @@ import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldStartWith
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.robolectric.RuntimeEnvironment
-import java.io.File
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.LogManager
 
-class ConfigFetcherSpec : RobolectricBaseSpec() {
+@Ignore
+open class ConfigFetcherSpec : RobolectricBaseSpec() {
 
-    private val server = MockWebServer()
-    private val context = RuntimeEnvironment.application
-    private lateinit var baseUrl: String
+    val server = MockWebServer()
+    val context = RuntimeEnvironment.application
+    lateinit var baseUrl: String
 
     init {
         LogManager.getLogManager()
@@ -41,6 +42,36 @@ class ConfigFetcherSpec : RobolectricBaseSpec() {
         server.shutdown()
     }
 
+    internal fun enqueueResponseValues(
+        values: Map<String, String> = hashMapOf("foo" to "bar"),
+        etag: String = "etag_value"
+    ) {
+        server.enqueue(
+            MockResponse()
+                .setBody("""
+                {
+                    "body": ${Json.nonstrict.stringify(
+                    (StringSerializer to StringSerializer).map, values
+                )}
+                }
+            """.trimIndent())
+                .setHeader("ETag", etag)
+        )
+    }
+
+    internal fun createFetcher(
+        url: String = baseUrl,
+        appId: String = "test_app_id",
+        subscriptionKey: String = "test_subscription_key"
+    ) = ConfigFetcher(
+        baseUrl = url,
+        appId = appId,
+        subscriptionKey = subscriptionKey,
+        context = context
+    )
+}
+
+class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     @Test
     fun `should fetch the config`() {
         val fetcher = createFetcher()
@@ -119,13 +150,15 @@ class ConfigFetcherSpec : RobolectricBaseSpec() {
         enqueueResponseValues(hashMapOf("foo" to "bar"))
         server.enqueue(MockResponse().setResponseCode(304))
 
-        createFetcher(cacheDirectory = context.cacheDir)
+        createFetcher()
             .fetch()
 
-        createFetcher(cacheDirectory = context.cacheDir)
+        createFetcher()
             .fetch()["foo"] shouldEqual "bar"
     }
+}
 
+class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
     @Test(expected = Exception::class)
     fun `should throw when an invalid base url is provided`() {
         createFetcher(url = "invalid url")
@@ -169,33 +202,4 @@ class ConfigFetcherSpec : RobolectricBaseSpec() {
             throw e
         }
     }
-
-    private fun enqueueResponseValues(
-        values: Map<String, String> = hashMapOf("foo" to "bar"),
-        etag: String = "etag_value"
-    ) {
-        server.enqueue(
-            MockResponse()
-                .setBody("""
-                {
-                    "body": ${Json.nonstrict.stringify(
-                        (StringSerializer to StringSerializer).map, values
-                    )}
-                }
-            """.trimIndent())
-                .setHeader("ETag", etag)
-        )
-    }
-
-    private fun createFetcher(
-        url: String = baseUrl,
-        appId: String = "test_app_id",
-        subscriptionKey: String = "test_subscription_key",
-        cacheDirectory: File = context.cacheDir
-    ) = ConfigFetcher(
-        baseUrl = url,
-        appId = appId,
-        subscriptionKey = subscriptionKey,
-        cacheDirectory = cacheDirectory
-    )
 }
