@@ -6,8 +6,9 @@ import androidx.annotation.VisibleForTesting
 import okhttp3.Interceptor
 import okhttp3.Response
 
-internal class SdkHeadersInterceptor @VisibleForTesting constructor(
+internal class HeadersInterceptor @VisibleForTesting constructor(
     private val appId: String,
+    private val subscriptionKey: String,
     private val appName: String,
     private val appVersion: String,
     private val deviceModel: String,
@@ -17,9 +18,11 @@ internal class SdkHeadersInterceptor @VisibleForTesting constructor(
 
     constructor(
         appId: String,
+        subscriptionKey: String,
         context: Context
     ) : this(
         appId = appId,
+        subscriptionKey = subscriptionKey,
         appName = context.packageName,
         appVersion = context.packageManager
             .getPackageInfo(context.packageName, 0)?.versionName ?: "NONE",
@@ -31,6 +34,7 @@ internal class SdkHeadersInterceptor @VisibleForTesting constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         return chain.proceed(
             chain.request().newBuilder()
+                .addHeader("apiKey", "ras-$subscriptionKey")
                 .addHeader("ras-app-id", appId)
                 .addHeader("ras-device-model", deviceModel)
                 .addHeader("ras-device-version", deviceOsVersion)

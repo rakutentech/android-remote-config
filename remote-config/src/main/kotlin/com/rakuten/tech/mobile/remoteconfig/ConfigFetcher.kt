@@ -14,13 +14,13 @@ import java.lang.IllegalArgumentException
 internal class ConfigFetcher constructor(
     baseUrl: String,
     appId: String,
-    private val subscriptionKey: String,
-    context: Context
+    context: Context,
+    private val verifier: SignatureVerifier,
+    client: OkHttpClient
 ) {
 
-    private val client = OkHttpClient.Builder()
+    private val client = client.newBuilder()
         .cache(Cache(context.cacheDir, CACHE_SIZE))
-        .addNetworkInterceptor(SdkHeadersInterceptor(appId, context))
         .build()
     private val requestUrl = try {
         HttpUrl.get(baseUrl)
@@ -31,7 +31,7 @@ internal class ConfigFetcher constructor(
         throw InvalidRemoteConfigBaseUrlException(exception)
     }
 
-    fun fetch(): Map<String, String> {
+    fun fetch(): Config {
         val response = client.newCall(buildFetchRequest())
             .execute()
 
@@ -39,14 +39,21 @@ internal class ConfigFetcher constructor(
             throw IOException("Unexpected response when fetching remote config: $response")
         }
 
-        val body = response.body()!!.string() // Body is never null if request is successful
+        val (body, keyId) = ConfigResponse.fromJsonString(
+            response.body()!!.string() // Body is never null if request is successful
+        )
+        val signature = response.header("Signature") ?: ""
 
-        return ConfigResponse.fromJsonString(body).body
+        val isVerified = verifier.verifyFetched(keyId, body.toInputStream(), signature)
+        if (!isVerified) {
+            throw IOException("Failed to verify signature of the payload from server.")
+        }
+
+        return Config(body, signature, keyId)
     }
 
     private fun buildFetchRequest() = Request.Builder()
         .url(requestUrl)
-        .addHeader("apiKey", "ras-$subscriptionKey")
         .build()
 
     companion object {
@@ -55,7 +62,10 @@ internal class ConfigFetcher constructor(
 }
 
 @Serializable
-private data class ConfigResponse(val body: Map<String, String>) {
+private data class ConfigResponse(
+    val body: Map<String, String>,
+    val keyId: String
+) {
 
     companion object {
         fun fromJsonString(body: String) = Json.nonstrict.parse(serializer(), body)

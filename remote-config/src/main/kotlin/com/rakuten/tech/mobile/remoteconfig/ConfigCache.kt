@@ -11,31 +11,34 @@ import java.io.File
 internal class ConfigCache @VisibleForTesting constructor(
     fetcher: ConfigFetcher,
     file: File,
-    poller: AsyncPoller
+    poller: AsyncPoller,
+    private val verifier: SignatureVerifier
 ) {
 
-    constructor(context: Context, fetcher: ConfigFetcher) : this(
+    constructor(context: Context, fetcher: ConfigFetcher, verifier: SignatureVerifier) : this(
         fetcher,
         File(
             context.filesDir,
             "com.rakuten.tech.mobile.remoteconfig.configcache.json"
         ),
-        AsyncPoller(DELAY_IN_MINUTES)
+        AsyncPoller(DELAY_IN_MINUTES),
+        verifier
     )
 
     private val config = if (file.exists()) {
-        Config.fromJsonString(file.readText())
+        val config = Config.fromJsonString(file.readText())
+
+        verifiedConfig(config) ?: emptyConfig()
     } else {
-        Config(emptyMap())
+        emptyConfig()
     }
 
     init {
         poller.start {
             try {
                 val fetchedConfig = fetcher.fetch()
-                val configJson = Config(fetchedConfig).toJsonString()
 
-                file.writeText(configJson)
+                file.writeText(fetchedConfig.toJsonString())
             } catch (error: Exception) {
                 Log.e("RemoteConfig", "Error while fetching config from server", error)
             }
@@ -46,13 +49,35 @@ internal class ConfigCache @VisibleForTesting constructor(
 
     fun getConfig(): Map<String, String> = config.values
 
+    private fun verifiedConfig(config: Config) : Config? {
+        val isVerified = verifier.verifyCached(
+            config.keyId,
+            config.values.toInputStream(),
+            config.signature
+        )
+
+        return if (isVerified) {
+            config
+        } else {
+            Log.e("Remote Config", "Failed to verify signature of config loaded from file.")
+
+            null
+        }
+    }
+
+    private fun emptyConfig() = Config(emptyMap(), "", "")
+
     companion object {
         const val DELAY_IN_MINUTES: Int = 60
     }
 }
 
 @Serializable
-private data class Config(val values: Map<String, String>) {
+internal data class Config(
+    val values: Map<String, String>,
+    val signature: String,
+    val keyId: String
+) {
 
     fun toJsonString() = Json.stringify(serializer(), this)
 

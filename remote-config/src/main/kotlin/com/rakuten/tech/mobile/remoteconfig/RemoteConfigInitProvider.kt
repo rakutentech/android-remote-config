@@ -6,6 +6,7 @@ import android.database.Cursor
 import android.net.Uri
 import com.rakuten.tech.mobile.manifestconfig.annotations.ManifestConfig
 import com.rakuten.tech.mobile.manifestconfig.annotations.MetaData
+import okhttp3.OkHttpClient
 
 /**
  * Fake ContentProvider that initializes the Remote Config SDK.
@@ -42,13 +43,32 @@ class RemoteConfigInitProvider : ContentProvider() {
 
         val manifestConfig = AppManifestConfig(context)
 
+        val client = OkHttpClient.Builder()
+            .addNetworkInterceptor(HeadersInterceptor(
+                appId = manifestConfig.appId(),
+                subscriptionKey = manifestConfig.subscriptionKey(),
+                context = context
+            ))
+            .build()
+        val keyFetcher = PublicKeyFetcher(
+            baseUrl = manifestConfig.baseUrl(),
+            client = client
+        )
+        val verifier = SignatureVerifier(
+            cache = PublicKeyCache(keyFetcher, context)
+        )
         val fetcher = ConfigFetcher(
             baseUrl = manifestConfig.baseUrl(),
             appId = manifestConfig.appId(),
-            subscriptionKey = manifestConfig.subscriptionKey(),
-            context = context
+            context = context,
+            verifier = verifier,
+            client = client
         )
-        val cache = ConfigCache(context, fetcher)
+        val cache = ConfigCache(
+            context = context,
+            fetcher = fetcher,
+            verifier = verifier
+        )
 
         RemoteConfig.init(cache)
 
