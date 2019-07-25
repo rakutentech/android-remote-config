@@ -1,5 +1,6 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.api
 
+import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse

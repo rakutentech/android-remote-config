@@ -1,5 +1,6 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.api
 
+import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import junit.framework.TestCase
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -37,12 +38,14 @@ open class PublicKeyFetcherSpec : RobolectricBaseSpec() {
     }
 
     internal fun createFetcher(url: String = baseUrl) =
-        PublicKeyFetcher(ConfigApiClient(
-            baseUrl = url,
-            appId = "test_app_id",
-            subscriptionKey = "test_subscription_key",
-            context = context
-        ))
+        PublicKeyFetcher(
+            ConfigApiClient(
+                baseUrl = url,
+                appId = "test_app_id",
+                subscriptionKey = "test_subscription_key",
+                context = context
+            )
+        )
 
     internal fun enqueueResponse(
         id: String = "test_id",

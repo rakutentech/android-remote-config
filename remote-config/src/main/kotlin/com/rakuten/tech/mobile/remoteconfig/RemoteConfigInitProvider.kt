@@ -6,6 +6,9 @@ import android.database.Cursor
 import android.net.Uri
 import com.rakuten.tech.mobile.manifestconfig.annotations.ManifestConfig
 import com.rakuten.tech.mobile.manifestconfig.annotations.MetaData
+import com.rakuten.tech.mobile.remoteconfig.api.ConfigApiClient
+import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
+import com.rakuten.tech.mobile.remoteconfig.api.PublicKeyFetcher
 
 /**
  * Fake ContentProvider that initializes the Remote Config SDK.

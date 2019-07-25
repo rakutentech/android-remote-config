@@ -2,6 +2,7 @@ package com.rakuten.tech.mobile.remoteconfig
 
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
+import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import org.amshove.kluent.*
 import org.junit.Test
 import org.robolectric.RuntimeEnvironment

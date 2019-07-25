@@ -1,4 +1,4 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.api
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -15,7 +15,9 @@ internal class PublicKeyFetcher(private val client: ConfigApiClient) {
 
         val body = response.body()!!.string()
 
-        return PublicKeyResponse.fromJsonString(body).key
+        return PublicKeyResponse.fromJsonString(
+            body
+        ).key
     }
 }
 

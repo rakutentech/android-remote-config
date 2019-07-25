@@ -1,5 +1,8 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.api
 
+import com.rakuten.tech.mobile.remoteconfig.Config
+import com.rakuten.tech.mobile.remoteconfig.SignatureVerifier
+import com.rakuten.tech.mobile.remoteconfig.toInputStream
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 

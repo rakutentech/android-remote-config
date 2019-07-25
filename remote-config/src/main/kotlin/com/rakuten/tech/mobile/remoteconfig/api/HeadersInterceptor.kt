@@ -1,8 +1,9 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.api
 
 import android.content.Context
 import android.os.Build
 import androidx.annotation.VisibleForTesting
+import com.rakuten.tech.mobile.remoteconfig.BuildConfig
 import okhttp3.Interceptor
 import okhttp3.Response
 

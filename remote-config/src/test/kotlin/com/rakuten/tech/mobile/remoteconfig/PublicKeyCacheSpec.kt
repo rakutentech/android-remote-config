@@ -1,6 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig
 
 import com.nhaarman.mockitokotlin2.mock
+import com.rakuten.tech.mobile.remoteconfig.api.PublicKeyFetcher
 import org.amshove.kluent.When
 import org.amshove.kluent.calling
 import org.amshove.kluent.itReturns

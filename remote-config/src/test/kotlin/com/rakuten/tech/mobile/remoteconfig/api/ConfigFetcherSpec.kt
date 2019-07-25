@@ -1,7 +1,10 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.api
 
 import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
+import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
+import com.rakuten.tech.mobile.remoteconfig.SignatureVerifier
+import com.rakuten.tech.mobile.remoteconfig.toInputStream
 import junit.framework.TestCase
 import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json

@@ -3,6 +3,7 @@ package com.rakuten.tech.mobile.remoteconfig
 import android.content.Context
 import android.util.Log
 import androidx.annotation.VisibleForTesting
+import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File

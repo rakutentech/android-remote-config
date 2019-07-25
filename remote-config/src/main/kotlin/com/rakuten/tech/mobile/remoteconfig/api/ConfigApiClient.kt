@@ -1,4 +1,4 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.api
 
 import android.content.Context
 import okhttp3.Cache
@@ -16,12 +16,16 @@ internal class ConfigApiClient(
 ) {
 
     private val client = OkHttpClient.Builder()
-        .cache(Cache(context.cacheDir, CACHE_SIZE))
-        .addNetworkInterceptor(HeadersInterceptor(
-            appId = appId,
-            subscriptionKey = subscriptionKey,
-            context = context
+        .cache(Cache(context.cacheDir,
+            CACHE_SIZE
         ))
+        .addNetworkInterceptor(
+            HeadersInterceptor(
+                appId = appId,
+                subscriptionKey = subscriptionKey,
+                context = context
+            )
+        )
         .build()
     private val requestUrl = try {
         HttpUrl.get(baseUrl)

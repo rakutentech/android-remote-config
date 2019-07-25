@@ -1,6 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig
 
 import android.content.Context
+import com.rakuten.tech.mobile.remoteconfig.api.PublicKeyFetcher
 
 internal class PublicKeyCache(
     private val keyFetcher: PublicKeyFetcher,
