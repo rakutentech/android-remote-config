@@ -3,7 +3,7 @@ package com.rakuten.tech.mobile.remoteconfig
 import android.content.Context
 
 internal class PublicKeyCache(
-    private val publicKeyFetcher: PublicKeyFetcher,
+    private val keyFetcher: PublicKeyFetcher,
     context: Context
 ) {
 
@@ -12,10 +12,10 @@ internal class PublicKeyCache(
         Context.MODE_PRIVATE
     )
 
-    operator fun get(keyId: String) : String? = prefs.getString(keyId, null)
+    operator fun get(keyId: String): String? = prefs.getString(keyId, null)
 
-    fun fetch(keyId: String) : String {
-        val key = publicKeyFetcher.fetch(keyId)
+    fun fetch(keyId: String): String {
+        val key = keyFetcher.fetch(keyId)
 
         prefs.edit()
             .putString(keyId, key)

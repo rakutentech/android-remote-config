@@ -14,55 +14,64 @@ import java.security.spec.ECPublicKeySpec
 
 internal class SignatureVerifier(private val cache: PublicKeyCache) {
 
-    fun verifyCached(keyId: String, message: InputStream, signature: String) : Boolean {
+    fun verifyCached(keyId: String, message: InputStream, signature: String): Boolean {
         val publicKey = cache[keyId] ?: return false
 
         return verify(publicKey, message, signature)
     }
 
-    fun verifyFetched(keyId: String, message: InputStream, signature: String) : Boolean {
+    fun verifyFetched(keyId: String, message: InputStream, signature: String): Boolean {
         val publicKey = cache[keyId] ?: cache.fetch(keyId)
 
         return verify(publicKey, message, signature)
     }
-}
 
-private fun verify(publicKey: String, message: InputStream, signature: String): Boolean {
-    return Signature.getInstance("SHA256withECDSA")
-        .apply {
-            initVerify(rawToEncodedECPublicKey(publicKey))
+    private fun verify(publicKey: String, message: InputStream, signature: String): Boolean {
+        return Signature.getInstance("SHA256withECDSA")
+            .apply {
+                initVerify(rawToEncodedECPublicKey(publicKey))
 
-            val buffer = ByteArray(16 * 1024)
-            var read = message.read(buffer)
-            while (read != -1) {
-                update(buffer, 0, read)
+                val buffer = ByteArray(SIXTEEN_KILOBYTES)
+                var read = message.read(buffer)
+                while (read != -1) {
+                    update(buffer, 0, read)
 
-                read = message.read(buffer)
+                    read = message.read(buffer)
+                }
             }
-        }
-        .verify(Base64.decode(signature, Base64.DEFAULT))
-}
+            .verify(Base64.decode(signature, Base64.DEFAULT))
+    }
 
-private fun rawToEncodedECPublicKey(key: String) : ECPublicKey {
-    val parameters = ecParameterSpecForCurve("secp256r1")
-    val keySizeBytes = parameters.order.bitLength() / java.lang.Byte.SIZE
-    val pubKey = Base64.decode(key, Base64.DEFAULT)
+    private fun rawToEncodedECPublicKey(key: String): ECPublicKey {
+        val parameters = ecParameterSpecForCurve("secp256r1")
+        val keySizeBytes = parameters.order.bitLength() / java.lang.Byte.SIZE
+        val pubKey = Base64.decode(key, Base64.DEFAULT)
 
-    var offset = 1 // First Byte represents compressed/uncompressed status - we're expecting it to always be uncompressed (04)
-    val x = BigInteger(1, pubKey.copyOfRange(offset, offset + keySizeBytes))
+        // First Byte represents compressed/uncompressed status
+        // We're expecting it to always be uncompressed (04)
+        var offset = UNCOMPRESSED_OFFSET
+        val x = BigInteger(POSITIVE_BIG_INTEGER, pubKey.copyOfRange(offset, offset + keySizeBytes))
 
-    offset += keySizeBytes
-    val y = BigInteger(1, pubKey.copyOfRange(offset, offset + keySizeBytes))
+        offset += keySizeBytes
+        val y = BigInteger(POSITIVE_BIG_INTEGER, pubKey.copyOfRange(offset, offset + keySizeBytes))
 
-    val keySpec = ECPublicKeySpec(ECPoint(x, y), parameters)
-    val keyFactory = KeyFactory.getInstance("EC")
-    return keyFactory
-        .generatePublic(keySpec) as ECPublicKey
-}
+        val keySpec = ECPublicKeySpec(ECPoint(x, y), parameters)
+        val keyFactory = KeyFactory.getInstance("EC")
+        return keyFactory
+            .generatePublic(keySpec) as ECPublicKey
+    }
 
-private fun ecParameterSpecForCurve(curveName: String) : ECParameterSpec {
-    val kpg = KeyPairGenerator.getInstance("EC")
-    kpg.initialize(ECGenParameterSpec(curveName))
+    private fun ecParameterSpecForCurve(curveName: String): ECParameterSpec {
+        val kpg = KeyPairGenerator.getInstance("EC")
+        kpg.initialize(ECGenParameterSpec(curveName))
 
-    return (kpg.generateKeyPair().public as ECPublicKey).params
+        return (kpg.generateKeyPair().public as ECPublicKey).params
+    }
+
+    companion object {
+        private const val SIXTEEN_KILOBYTES = 16 * 1024
+
+        private const val UNCOMPRESSED_OFFSET = 1
+        private const val POSITIVE_BIG_INTEGER = 1
+    }
 }

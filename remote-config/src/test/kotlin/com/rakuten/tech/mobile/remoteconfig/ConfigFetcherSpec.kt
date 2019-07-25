@@ -7,7 +7,6 @@ import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonUnknownKeyException
 import kotlinx.serialization.map
-import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.amshove.kluent.*
@@ -55,14 +54,12 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
     ) {
         server.enqueue(
             MockResponse()
-                .setBody("""
-                {
+                .setBody("""{
                     "body": ${Json.nonstrict.stringify(
                         (StringSerializer to StringSerializer).map, values
                     )},
                     "keyId": "$keyId"
-                }
-            """.trimIndent())
+                }""".trimIndent())
                 .setHeader("Signature", signature)
                 .setHeader("ETag", etag)
         )
@@ -73,11 +70,14 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
         appId: String = "test_app_id",
         subscriptionKey: String = "test_subscription_key"
     ) = ConfigFetcher(
-        baseUrl = url,
         appId = appId,
-        context = context,
         verifier = stubVerifier,
-        client = OkHttpClient.Builder().build()
+        client = ConfigApiClient(
+            baseUrl = url,
+            appId = "test_app_id",
+            subscriptionKey = "test_subscription_key",
+            context = context
+        )
     )
 }
 
@@ -107,16 +107,6 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should fetch the config from the provided url`() {
-        val fetcher = createFetcher(url = baseUrl)
-        enqueueResponse()
-
-        fetcher.fetch()
-
-        server.takeRequest().requestUrl.toString() shouldStartWith baseUrl
-    }
-
-    @Test
     fun `should fetch the config for the provided App Id`() {
         val fetcher = createFetcher(appId = "test-app-id")
         enqueueResponse()
@@ -137,46 +127,9 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should attach ETag value to subsequent requests as If-None-Match`() {
-        val fetcher = createFetcher()
-        enqueueResponse(etag = "etag_value")
-        enqueueResponse()
-
-        fetcher.fetch()
-        server.takeRequest()
-
-        fetcher.fetch()
-
-        server.takeRequest().headers.get("If-None-Match") shouldEqual "etag_value"
-    }
-
-    @Test
-    fun `should return cached config for 304 response code`() {
-        val fetcher = createFetcher()
-        enqueueResponse(hashMapOf("foo" to "bar"))
-        server.enqueue(MockResponse().setResponseCode(304))
-
-        fetcher.fetch()
-
-        fetcher.fetch().values["foo"] shouldEqual "bar"
-    }
-
-    @Test
-    fun `should cache the config between App launches`() {
-        enqueueResponse(hashMapOf("foo" to "bar"))
-        server.enqueue(MockResponse().setResponseCode(304))
-
-        createFetcher()
-            .fetch()
-
-        createFetcher()
-            .fetch().values["foo"] shouldEqual "bar"
-    }
-
-    @Test
     fun `should verify the signature of response body`() {
         val body = hashMapOf("foo" to "bar")
-        When calling stubVerifier.verifyFetched(any(), body.toInputStream(), any()) itReturns true
+        When calling stubVerifier.verifyFetched(any(), eq(body.toInputStream()), any()) itReturns true
         val fetcher = createFetcher()
         enqueueResponse(values = body)
 
@@ -203,10 +156,6 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
 }
 
 class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
-    @Test(expected = Exception::class)
-    fun `should throw when an invalid base url is provided`() {
-        createFetcher(url = "invalid url")
-    }
 
     @Test(expected = IOException::class)
     fun `should throw when the request is unsuccessful`() {
@@ -241,13 +190,11 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
     fun `should not throw when there are extra keys in the response`() {
         val fetcher = createFetcher()
         server.enqueue(
-            MockResponse().setBody("""
-                {
+            MockResponse().setBody("""{
                     "body": {},
                     "keyId": "test_key_id",
                     "randomKey": "random_value"
-                }
-            """.trimIndent())
+                }""".trimIndent())
         )
 
         try {

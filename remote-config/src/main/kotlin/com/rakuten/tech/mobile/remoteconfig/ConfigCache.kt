@@ -15,8 +15,8 @@ internal class ConfigCache @VisibleForTesting constructor(
     private val verifier: SignatureVerifier
 ) {
 
-    constructor(context: Context, fetcher: ConfigFetcher, verifier: SignatureVerifier) : this(
-        fetcher,
+    constructor(context: Context, configFetcher: ConfigFetcher, verifier: SignatureVerifier) : this(
+        configFetcher,
         File(
             context.filesDir,
             "com.rakuten.tech.mobile.remoteconfig.configcache.json"
@@ -49,7 +49,7 @@ internal class ConfigCache @VisibleForTesting constructor(
 
     fun getConfig(): Map<String, String> = config.values
 
-    private fun verifiedConfig(config: Config) : Config? {
+    private fun verifiedConfig(config: Config): Config? {
         val isVerified = verifier.verifyCached(
             config.keyId,
             config.values.toInputStream(),
