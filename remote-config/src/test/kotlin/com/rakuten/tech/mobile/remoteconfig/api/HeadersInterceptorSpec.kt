@@ -1,5 +1,6 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.api
 
+import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
@@ -14,7 +15,7 @@ import java.util.logging.Level
 import java.util.logging.LogManager
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
-class SdkHeadersInterceptorSpec(
+class HeadersInterceptorSpec(
     private val description: String,
     private val name: String,
     private val value: String
@@ -41,8 +42,9 @@ class SdkHeadersInterceptorSpec(
     @Test
     fun `should attach the header`() {
         val client = OkHttpClient.Builder().addNetworkInterceptor(
-            SdkHeadersInterceptor(
+            HeadersInterceptor(
                 appId = "test-app-id",
+                subscriptionKey = "test-subscription-key",
                 appName = "test.app.name",
                 appVersion = "1.0.0",
                 deviceModel = "test model name",
@@ -66,6 +68,7 @@ class SdkHeadersInterceptorSpec(
         fun data(): Collection<Array<String>> {
             return listOf(
                 arrayOf("App ID", "ras-app-id", "test-app-id"),
+                arrayOf("Subscription Key prefixed with 'ras-'", "apiKey", "ras-test-subscription-key"),
                 arrayOf("SDK Name", "ras-sdk-name", "Remote Config"),
                 arrayOf("App Name", "ras-app-name", "test.app.name"),
                 arrayOf("App Version", "ras-app-version", "1.0.0"),

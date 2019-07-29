@@ -1,15 +1,14 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.api
 
+import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import junit.framework.TestCase
 import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonUnknownKeyException
 import kotlinx.serialization.map
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.amshove.kluent.shouldContain
-import org.amshove.kluent.shouldEndWith
-import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldStartWith
+import org.amshove.kluent.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
@@ -42,19 +41,21 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
         server.shutdown()
     }
 
-    internal fun enqueueResponseValues(
+    internal fun enqueueResponse(
         values: Map<String, String> = hashMapOf("foo" to "bar"),
+        keyId: String = "key_id_value",
+        signature: String = "test_signature",
         etag: String = "etag_value"
     ) {
         server.enqueue(
             MockResponse()
-                .setBody("""
-                {
+                .setBody("""{
                     "body": ${Json.nonstrict.stringify(
-                    (StringSerializer to StringSerializer).map, values
-                )}
-                }
-            """.trimIndent())
+                        (StringSerializer to StringSerializer).map, values
+                    )},
+                    "keyId": "$keyId"
+                }""".trimIndent())
+                .setHeader("Signature", signature)
                 .setHeader("ETag", etag)
         )
     }
@@ -64,36 +65,45 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
         appId: String = "test_app_id",
         subscriptionKey: String = "test_subscription_key"
     ) = ConfigFetcher(
-        baseUrl = url,
         appId = appId,
-        subscriptionKey = subscriptionKey,
-        context = context
+        client = ConfigApiClient(
+            baseUrl = url,
+            appId = "test_app_id",
+            subscriptionKey = "test_subscription_key",
+            context = context
+        )
     )
 }
 
 class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     @Test
-    fun `should fetch the config`() {
+    fun `should fetch the config values`() {
         val fetcher = createFetcher()
-        enqueueResponseValues(hashMapOf("foo" to "bar"))
+        enqueueResponse(hashMapOf("foo" to "bar"))
 
-        fetcher.fetch()["foo"] shouldEqual "bar"
+        fetcher.fetch().values["foo"] shouldEqual "bar"
     }
 
     @Test
-    fun `should fetch the config from the provided url`() {
-        val fetcher = createFetcher(url = baseUrl)
-        enqueueResponseValues()
+    fun `should fetch the config keyId`() {
+        val fetcher = createFetcher()
+        enqueueResponse(keyId = "test_key_id")
 
-        fetcher.fetch()
+        fetcher.fetch().keyId shouldEqual "test_key_id"
+    }
 
-        server.takeRequest().requestUrl.toString() shouldStartWith baseUrl
+    @Test
+    fun `should fetch the config signature`() {
+        val fetcher = createFetcher()
+        enqueueResponse(signature = "test_signature")
+
+        fetcher.fetch().signature shouldEqual "test_signature"
     }
 
     @Test
     fun `should fetch the config for the provided App Id`() {
         val fetcher = createFetcher(appId = "test-app-id")
-        enqueueResponseValues()
+        enqueueResponse()
 
         fetcher.fetch()
 
@@ -103,66 +113,15 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     @Test
     fun `should fetch the config from the 'config' endpoint`() {
         val fetcher = createFetcher()
-        enqueueResponseValues()
+        enqueueResponse()
 
         fetcher.fetch()
 
         server.takeRequest().path shouldEndWith "/config"
     }
-
-    @Test
-    fun `should fetch the config using the provided Subscription Key prepended with 'ras-'`() {
-        val fetcher = createFetcher(subscriptionKey = "test_subscription_key")
-        enqueueResponseValues()
-
-        fetcher.fetch()
-
-        server.takeRequest().headers["apiKey"] shouldEqual "ras-test_subscription_key"
-    }
-
-    @Test
-    fun `should attach ETag value to subsequent requests as If-None-Match`() {
-        val fetcher = createFetcher()
-        enqueueResponseValues(etag = "etag_value")
-        enqueueResponseValues()
-
-        fetcher.fetch()
-        server.takeRequest()
-
-        fetcher.fetch()
-
-        server.takeRequest().headers.get("If-None-Match") shouldEqual "etag_value"
-    }
-
-    @Test
-    fun `should return cached config for 304 response code`() {
-        val fetcher = createFetcher()
-        enqueueResponseValues(hashMapOf("foo" to "bar"))
-        server.enqueue(MockResponse().setResponseCode(304))
-
-        fetcher.fetch()
-
-        fetcher.fetch()["foo"] shouldEqual "bar"
-    }
-
-    @Test
-    fun `should cache the config between App launches`() {
-        enqueueResponseValues(hashMapOf("foo" to "bar"))
-        server.enqueue(MockResponse().setResponseCode(304))
-
-        createFetcher()
-            .fetch()
-
-        createFetcher()
-            .fetch()["foo"] shouldEqual "bar"
-    }
 }
 
 class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
-    @Test(expected = Exception::class)
-    fun `should throw when an invalid base url is provided`() {
-        createFetcher(url = "invalid url")
-    }
 
     @Test(expected = IOException::class)
     fun `should throw when the request is unsuccessful`() {
@@ -176,7 +135,17 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
     fun `should throw when the 'body' key is missing in response`() {
         val fetcher = createFetcher()
         server.enqueue(
-            MockResponse().setBody("""{"randomKey":"random_value"}""")
+            MockResponse().setBody("""{"key_id":"test_key_id"}""")
+        )
+
+        fetcher.fetch()
+    }
+
+    @Test(expected = Exception::class)
+    fun `should throw when the 'keyId' key is missing in response`() {
+        val fetcher = createFetcher()
+        server.enqueue(
+            MockResponse().setBody("""{"body": {}}""")
         )
 
         fetcher.fetch()
@@ -187,18 +156,17 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
     fun `should not throw when there are extra keys in the response`() {
         val fetcher = createFetcher()
         server.enqueue(
-            MockResponse().setBody("""
-                {
+            MockResponse().setBody("""{
                     "body": {},
+                    "keyId": "test_key_id",
                     "randomKey": "random_value"
-                }
-            """.trimIndent())
+                }""".trimIndent())
         )
 
         try {
             fetcher.fetch()
-        } catch (e: Exception) {
-            TestCase.fail("Should not throw an exception.")
+        } catch (e: JsonUnknownKeyException) {
+            TestCase.fail("Should not throw an exception when there are extra keys in response.")
             throw e
         }
     }

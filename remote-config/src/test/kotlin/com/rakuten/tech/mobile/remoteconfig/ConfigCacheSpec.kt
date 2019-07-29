@@ -2,6 +2,8 @@ package com.rakuten.tech.mobile.remoteconfig
 
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
+import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
+import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import org.amshove.kluent.*
 import org.junit.Test
 import org.robolectric.RuntimeEnvironment
@@ -13,10 +15,11 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     private val context = RuntimeEnvironment.application.applicationContext
     private val stubFetcher: ConfigFetcher = mock()
     private val stubPoller: AsyncPoller = mock()
+    private val stubVerifier: ConfigVerifier = mock()
 
     @Test
     fun `should be empty by default`() {
-        val cache = ConfigCache(context, stubFetcher)
+        val cache = ConfigCache(context, stubFetcher, stubVerifier)
 
         cache["foo"] shouldBe null
     }
@@ -46,7 +49,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     }
 
     @Test
-    fun `should use the cached config when fetching fails`() {
+    fun `should apply the cached config when fetching fails`() {
         val fileName = "cache.json"
         `create cache with fetched config`(
             fileName = fileName,
@@ -57,21 +60,50 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
             throw IOException("Failed.")
         }
 
-        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller)
+        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
 
         cache["foo"] shouldEqual "bar"
+    }
+
+    @Test
+    fun `should not cache the fetched config when verification fails`() {
+        val values = hashMapOf("foo" to "bar")
+        val fileName = "cache.json"
+        When calling stubFetcher.fetch() itReturns Config(values, "", "")
+        When calling stubVerifier.verify(any()) itReturns false
+        ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+
+        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+
+        cache["foo"] shouldEqual null
+    }
+
+    @Test
+    fun `should not apply the cached config when verification fails`() {
+        val filename = "cache.json"
+        `create cache with fetched config`(
+            configValues = hashMapOf("foo" to "bar"),
+            fileName = filename
+        )
+
+        When calling stubVerifier.verify(any()) itReturns false
+
+        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier)
+
+        cache["foo"] shouldEqual null
     }
 
     private fun `create cache with fetched config`(
         configValues: Map<String, String> = hashMapOf("testKey" to "test_value"),
         fileName: String = "cache.json"
     ): ConfigCache {
-        When calling stubFetcher.fetch() itReturns configValues
+        When calling stubFetcher.fetch() itReturns Config(configValues, "", "")
         When calling stubPoller.start(any()) itAnswers {
             (it.arguments[0] as () -> Any).invoke()
         }
+        When calling stubVerifier.verify(any()) itReturns true
 
-        return ConfigCache(stubFetcher, createFile(fileName), stubPoller)
+        return ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
     }
 
     private fun createFile(name: String) = File(context.filesDir, name)
