@@ -1,4 +1,4 @@
-package com.rakuten.tech.mobile.remoteconfig
+package com.rakuten.tech.mobile.remoteconfig.verification
 
 import android.util.Base64
 import java.io.InputStream
@@ -12,21 +12,9 @@ import java.security.spec.ECParameterSpec
 import java.security.spec.ECPoint
 import java.security.spec.ECPublicKeySpec
 
-internal class SignatureVerifier(private val cache: PublicKeyCache) {
+internal class SignatureVerifier {
 
-    fun verifyCached(keyId: String, message: InputStream, signature: String): Boolean {
-        val publicKey = cache[keyId] ?: return false
-
-        return verify(publicKey, message, signature)
-    }
-
-    fun verifyFetched(keyId: String, message: InputStream, signature: String): Boolean {
-        val publicKey = cache[keyId] ?: cache.fetch(keyId)
-
-        return verify(publicKey, message, signature)
-    }
-
-    private fun verify(publicKey: String, message: InputStream, signature: String): Boolean {
+    fun verify(publicKey: String, message: InputStream, signature: String): Boolean {
         return Signature.getInstance("SHA256withECDSA")
             .apply {
                 initVerify(rawToEncodedECPublicKey(publicKey))
@@ -49,7 +37,8 @@ internal class SignatureVerifier(private val cache: PublicKeyCache) {
 
         // First Byte represents compressed/uncompressed status
         // We're expecting it to always be uncompressed (04)
-        var offset = UNCOMPRESSED_OFFSET
+        var offset =
+            UNCOMPRESSED_OFFSET
         val x = BigInteger(POSITIVE_BIG_INTEGER, pubKey.copyOfRange(offset, offset + keySizeBytes))
 
         offset += keySizeBytes

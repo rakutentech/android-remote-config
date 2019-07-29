@@ -1,10 +1,6 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
-import com.nhaarman.mockitokotlin2.eq
-import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
-import com.rakuten.tech.mobile.remoteconfig.SignatureVerifier
-import com.rakuten.tech.mobile.remoteconfig.toInputStream
 import junit.framework.TestCase
 import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json
@@ -25,8 +21,6 @@ import java.util.logging.LogManager
 @Ignore
 open class ConfigFetcherSpec : RobolectricBaseSpec() {
 
-    internal val stubVerifier: SignatureVerifier = mock()
-
     val server = MockWebServer()
     val context = RuntimeEnvironment.application
     lateinit var baseUrl: String
@@ -38,8 +32,6 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
 
     @Before
     fun setup() {
-        When calling stubVerifier.verifyFetched(any(), any(), any()) itReturns true
-
         server.start()
         baseUrl = server.url("config").toString()
     }
@@ -74,7 +66,6 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
         subscriptionKey: String = "test_subscription_key"
     ) = ConfigFetcher(
         appId = appId,
-        verifier = stubVerifier,
         client = ConfigApiClient(
             baseUrl = url,
             appId = "test_app_id",
@@ -128,34 +119,6 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
 
         server.takeRequest().path shouldEndWith "/config"
     }
-
-    @Test
-    fun `should verify the signature of response body`() {
-        val body = hashMapOf("foo" to "bar")
-        When calling stubVerifier.verifyFetched(any(), eq(body.toInputStream()), any()) itReturns true
-        val fetcher = createFetcher()
-        enqueueResponse(values = body)
-
-        fetcher.fetch().values["foo"] shouldEqual "bar"
-    }
-
-    @Test
-    fun `should verify the signature using the key id from response`() {
-        When calling stubVerifier.verifyFetched(eq("test_key_id"), any(), any()) itReturns true
-        val fetcher = createFetcher()
-        enqueueResponse(keyId = "test_key_id")
-
-        fetcher.fetch().values["foo"] shouldEqual "bar"
-    }
-
-    @Test
-    fun `should verify the signature using the signature from response`() {
-        When calling stubVerifier.verifyFetched(any(), any(), eq("test_signature")) itReturns true
-        val fetcher = createFetcher()
-        enqueueResponse(signature = "test_signature")
-
-        fetcher.fetch().values["foo"] shouldEqual "bar"
-    }
 }
 
 class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
@@ -206,14 +169,5 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
             TestCase.fail("Should not throw an exception when there are extra keys in response.")
             throw e
         }
-    }
-
-    @Test(expected = Exception::class)
-    fun `should throw when signature verification fails`() {
-        When calling stubVerifier.verifyFetched(any(), any(), any()) itReturns false
-        val fetcher = createFetcher()
-        enqueueResponse()
-
-        fetcher.fetch()
     }
 }

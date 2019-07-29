@@ -3,6 +3,7 @@ package com.rakuten.tech.mobile.remoteconfig
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
+import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import org.amshove.kluent.*
 import org.junit.Test
 import org.robolectric.RuntimeEnvironment
@@ -14,7 +15,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     private val context = RuntimeEnvironment.application.applicationContext
     private val stubFetcher: ConfigFetcher = mock()
     private val stubPoller: AsyncPoller = mock()
-    private val stubVerifier: SignatureVerifier = mock()
+    private val stubVerifier: ConfigVerifier = mock()
 
     @Test
     fun `should be empty by default`() {
@@ -65,6 +66,19 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     }
 
     @Test
+    fun `should not cache the fetched config when verification fails`() {
+        val values = hashMapOf("foo" to "bar")
+        val fileName = "cache.json"
+        When calling stubFetcher.fetch() itReturns Config(values, "", "")
+        When calling stubVerifier.verify(any()) itReturns false
+        ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+
+        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+
+        cache["foo"] shouldEqual null
+    }
+
+    @Test
     fun `should not apply the cached config when verification fails`() {
         val filename = "cache.json"
         `create cache with fetched config`(
@@ -72,7 +86,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
             fileName = filename
         )
 
-        When calling stubVerifier.verifyCached(any(), any(), any()) itReturns false
+        When calling stubVerifier.verify(any()) itReturns false
 
         val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier)
 
@@ -87,7 +101,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         When calling stubPoller.start(any()) itAnswers {
             (it.arguments[0] as () -> Any).invoke()
         }
-        When calling stubVerifier.verifyCached(any(), any(), any()) itReturns true
+        When calling stubVerifier.verify(any()) itReturns true
 
         return ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
     }

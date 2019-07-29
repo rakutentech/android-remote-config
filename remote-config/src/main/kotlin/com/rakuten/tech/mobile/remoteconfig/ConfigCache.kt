@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
+import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -13,10 +14,10 @@ internal class ConfigCache @VisibleForTesting constructor(
     fetcher: ConfigFetcher,
     file: File,
     poller: AsyncPoller,
-    private val verifier: SignatureVerifier
+    private val verifier: ConfigVerifier
 ) {
 
-    constructor(context: Context, configFetcher: ConfigFetcher, verifier: SignatureVerifier) : this(
+    constructor(context: Context, configFetcher: ConfigFetcher, verifier: ConfigVerifier) : this(
         configFetcher,
         File(
             context.filesDir,
@@ -29,7 +30,11 @@ internal class ConfigCache @VisibleForTesting constructor(
     private val config = if (file.exists()) {
         val config = Config.fromJsonString(file.readText())
 
-        verifiedConfig(config) ?: emptyConfig()
+        if (verifier.verify(config)) {
+            config
+        } else {
+            emptyConfig()
+        }
     } else {
         emptyConfig()
     }
@@ -39,7 +44,11 @@ internal class ConfigCache @VisibleForTesting constructor(
             try {
                 val fetchedConfig = fetcher.fetch()
 
-                file.writeText(fetchedConfig.toJsonString())
+                verifier.ensureFetchedKey(fetchedConfig.keyId)
+
+                if (verifier.verify(fetchedConfig)) {
+                    file.writeText(fetchedConfig.toJsonString())
+                }
             } catch (error: Exception) {
                 Log.e("RemoteConfig", "Error while fetching config from server", error)
             }
@@ -49,22 +58,6 @@ internal class ConfigCache @VisibleForTesting constructor(
     operator fun get(key: String) = config.values[key]
 
     fun getConfig(): Map<String, String> = config.values
-
-    private fun verifiedConfig(config: Config): Config? {
-        val isVerified = verifier.verifyCached(
-            config.keyId,
-            config.values.toInputStream(),
-            config.signature
-        )
-
-        return if (isVerified) {
-            config
-        } else {
-            Log.e("Remote Config", "Failed to verify signature of config loaded from file.")
-
-            null
-        }
-    }
 
     private fun emptyConfig() = Config(emptyMap(), "", "")
 

@@ -13,7 +13,7 @@ internal class PublicKeyFetcher(private val client: ConfigApiClient) {
             throw IOException("Unexpected response when fetching public key: $response")
         }
 
-        val body = response.body()!!.string()
+        val body = response.body()!!.string() // Body is never null if request is successful
 
         return PublicKeyResponse.fromJsonString(
             body

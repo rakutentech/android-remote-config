@@ -1,8 +1,6 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
 import com.rakuten.tech.mobile.remoteconfig.Config
-import com.rakuten.tech.mobile.remoteconfig.SignatureVerifier
-import com.rakuten.tech.mobile.remoteconfig.toInputStream
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -10,8 +8,7 @@ import java.io.IOException
 
 internal class ConfigFetcher constructor(
     private val client: ConfigApiClient,
-    private val appId: String,
-    private val verifier: SignatureVerifier
+    private val appId: String
 ) {
 
     fun fetch(): Config {
@@ -25,11 +22,6 @@ internal class ConfigFetcher constructor(
             response.body()!!.string() // Body is never null if request is successful
         )
         val signature = response.header("Signature") ?: ""
-
-        val isVerified = verifier.verifyFetched(keyId, body.toInputStream(), signature)
-        if (!isVerified) {
-            throw IOException("Failed to verify signature of the payload from server.")
-        }
 
         return Config(body, signature, keyId)
     }

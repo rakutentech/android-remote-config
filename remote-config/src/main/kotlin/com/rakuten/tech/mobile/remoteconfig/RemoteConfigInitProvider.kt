@@ -9,6 +9,8 @@ import com.rakuten.tech.mobile.manifestconfig.annotations.MetaData
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigApiClient
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.PublicKeyFetcher
+import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
+import com.rakuten.tech.mobile.remoteconfig.verification.PublicKeyCache
 
 /**
  * Fake ContentProvider that initializes the Remote Config SDK.
@@ -52,13 +54,14 @@ class RemoteConfigInitProvider : ContentProvider() {
             subscriptionKey = manifestConfig.subscriptionKey(),
             context = context
         )
-        val verifier = SignatureVerifier(PublicKeyCache(
-            keyFetcher = PublicKeyFetcher(client),
-            context = context
-        ))
+        val verifier = ConfigVerifier(
+            PublicKeyCache(
+                keyFetcher = PublicKeyFetcher(client),
+                context = context
+            )
+        )
         val configFetcher = ConfigFetcher(
             appId = manifestConfig.appId(),
-            verifier = verifier,
             client = client
         )
         val cache = ConfigCache(
