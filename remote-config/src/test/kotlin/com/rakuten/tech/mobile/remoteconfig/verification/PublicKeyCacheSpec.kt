@@ -1,6 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig.verification
 
 import android.content.Context
+import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import com.rakuten.tech.mobile.remoteconfig.api.PublicKeyFetcher
@@ -15,10 +16,13 @@ import org.robolectric.RuntimeEnvironment
 class PublicKeyCacheSpec : RobolectricBaseSpec() {
 
     private val stubFetcher: PublicKeyFetcher = mock()
+    private val stubEncryptor: Encryptor = mock()
 
     @Before
     fun setup() {
         When calling stubFetcher.fetch("test_key_id") itReturns "test_public_key"
+        When calling stubEncryptor.encrypt("test_public_key") itReturns "test_public_key"
+        When calling stubEncryptor.decrypt("test_public_key") itReturns "test_public_key"
     }
 
     @Test
@@ -51,8 +55,20 @@ class PublicKeyCacheSpec : RobolectricBaseSpec() {
         cache["test_key_id"] shouldEqual "test_public_key"
     }
 
+    @Test
+    fun `should cache the public key in an encrypted form after fetching`() {
+        When calling stubEncryptor.encrypt(any()) itReturns "encrypted_publicKey"
+        When calling stubEncryptor.decrypt("encrypted_publicKey") itReturns "decrypted_public_key"
+        val cache = createCache()
+
+        cache.fetch("test_key_id")
+
+        cache["test_key_id"] shouldEqual "decrypted_public_key"
+    }
+
     private fun createCache(
         fetcher: PublicKeyFetcher = stubFetcher,
-        context: Context = RuntimeEnvironment.application
-    ) = PublicKeyCache(fetcher, context)
+        context: Context = RuntimeEnvironment.application,
+        encryptor: Encryptor = stubEncryptor
+    ) = PublicKeyCache(fetcher, context, encryptor)
 }
