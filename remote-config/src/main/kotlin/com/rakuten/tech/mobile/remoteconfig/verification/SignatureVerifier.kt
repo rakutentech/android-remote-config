@@ -37,8 +37,7 @@ internal class SignatureVerifier {
 
         // First Byte represents compressed/uncompressed status
         // We're expecting it to always be uncompressed (04)
-        var offset =
-            UNCOMPRESSED_OFFSET
+        var offset = UNCOMPRESSED_OFFSET
         val x = BigInteger(POSITIVE_BIG_INTEGER, pubKey.copyOfRange(offset, offset + keySizeBytes))
 
         offset += keySizeBytes

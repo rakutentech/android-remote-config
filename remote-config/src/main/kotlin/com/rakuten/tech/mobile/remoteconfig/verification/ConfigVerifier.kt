@@ -16,18 +16,13 @@ internal class ConfigVerifier @VisibleForTesting constructor(
     fun verify(config: Config): Boolean {
         return try {
             val publicKey = cache[config.keyId] ?: return false
-
             val isVerified = signatureVerifier.verify(
                 publicKey,
                 config.values.toInputStream(),
                 config.signature
             )
 
-            if (isVerified) {
-                true
-            } else {
-                throw InvalidSignatureException()
-            }
+            if (isVerified) true else throw InvalidSignatureException()
         } catch (exception: Exception) {
             Log.e("Remote Config", "Failed to verify signature of config.", exception)
             cache.remove(config.keyId)
