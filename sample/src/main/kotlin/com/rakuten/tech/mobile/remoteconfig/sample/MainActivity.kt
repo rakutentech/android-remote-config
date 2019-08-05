@@ -1,6 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig.sample
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
@@ -27,29 +28,34 @@ class MainActivity @VisibleForTesting constructor(
         binding.activity = this
     }
 
-    fun onGetStringClick() = showToast(key, remoteConfig.getString(key, fallback))
+    fun onGetStringClick() = showConfigToast(key) { remoteConfig.getString(key, fallback) }
 
-    fun onGetBooleanClick() = showToast(key, remoteConfig.getBoolean(key, fallback.toBoolean()))
+    fun onGetBooleanClick() = showConfigToast(key) { remoteConfig.getBoolean(key, fallback.toBoolean()) }
 
-    fun onGetLongClick() = showToast(key, remoteConfig.getNumber(key, fallback.toLong()))
+    fun onGetLongClick() = showConfigToast(key) { remoteConfig.getNumber(key, fallback.toLong()) }
 
-    fun onGetShortClick() = showToast(key, remoteConfig.getNumber(key, fallback.toShort()))
+    fun onGetShortClick() = showConfigToast(key) { remoteConfig.getNumber(key, fallback.toShort()) }
 
-    fun onGetDoubleClick() = showToast(key, remoteConfig.getNumber(key, fallback.toDouble()))
+    fun onGetDoubleClick() = showConfigToast(key) { remoteConfig.getNumber(key, fallback.toDouble())}
 
-    fun onGetFloatClick() = showToast(key, remoteConfig.getNumber(key, fallback.toFloat()))
+    fun onGetFloatClick() = showConfigToast(key) { remoteConfig.getNumber(key, fallback.toFloat()) }
 
-    fun onGetIntClick() = showToast(key, remoteConfig.getNumber(key, fallback.toInt()))
+    fun onGetIntClick() = showConfigToast(key) { remoteConfig.getNumber(key, fallback.toInt())}
 
-    fun onGetByteClick() = showToast(key, remoteConfig.getNumber(key, fallback.toByte()))
+    fun onGetByteClick() = showConfigToast(key) { remoteConfig.getNumber(key, fallback.toByte())}
 
-    fun onGetConfigClick() = showToast("Config", remoteConfig.getConfig())
+    fun onGetConfigClick() = showConfigToast("Config") { remoteConfig.getConfig() }
 
-    private fun showToast(key: String, value: Any) {
-        Toast.makeText(
-            this,
-            "$key = $value",
-            Toast.LENGTH_SHORT
-        ).show()
+    private fun <T> showConfigToast(title: String, configGetter: () -> T) {
+        val message = try {
+            "$title = ${configGetter.invoke()}"
+        } catch (e: Exception) {
+            Log.e("Remote Config Sample", "Error retrieving remote config value.", e)
+
+            "Error retrieving config values: ${e.message}"
+        }
+
+        Toast.makeText(this, message, Toast.LENGTH_SHORT)
+            .show()
     }
 }
