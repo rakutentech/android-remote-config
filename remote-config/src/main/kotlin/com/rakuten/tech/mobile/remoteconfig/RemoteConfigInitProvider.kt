@@ -40,6 +40,16 @@ class RemoteConfigInitProvider : ContentProvider() {
          **/
         @MetaData(key = "com.rakuten.tech.mobile.ras.ProjectSubscriptionKey")
         fun subscriptionKey(): String
+
+        /**
+         * Delay in minutes between polls to the Config API.
+         * Set to 60 minutes by default.
+         **/
+        @MetaData(
+            key = "com.rakuten.tech.mobile.ras.PollingDelay",
+            value = "60"
+        )
+        fun pollingDelay(): Int
     }
 
     @Suppress("LongMethod")
@@ -67,7 +77,8 @@ class RemoteConfigInitProvider : ContentProvider() {
         val cache = ConfigCache(
             context = context,
             configFetcher = configFetcher,
-            verifier = verifier
+            verifier = verifier,
+            poller = AsyncPoller(manifestConfig.pollingDelay())
         )
 
         RemoteConfig.init(cache)

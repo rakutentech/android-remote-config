@@ -19,7 +19,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
 
     @Test
     fun `should be empty by default`() {
-        val cache = ConfigCache(context, stubFetcher, stubVerifier)
+        val cache = ConfigCache(context, stubFetcher, stubVerifier, stubPoller)
 
         cache["foo"] shouldBe null
     }
