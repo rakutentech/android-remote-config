@@ -25,6 +25,11 @@
       android:name="com.rakuten.tech.mobile.ras.ProjectSubscriptionKey"
       android:value="${subscriptionKey}" />
 
+    <!-- For QA purposes -->
+    <meta-data
+      android:name="com.rakuten.tech.mobile.ras.PollingDelay"
+      android:value="5" />
+
     <activity android:name=".MainActivity">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>

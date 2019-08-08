@@ -17,13 +17,18 @@ internal class ConfigCache @VisibleForTesting constructor(
     private val verifier: ConfigVerifier
 ) {
 
-    constructor(context: Context, configFetcher: ConfigFetcher, verifier: ConfigVerifier) : this(
+    constructor(
+        context: Context,
+        configFetcher: ConfigFetcher,
+        verifier: ConfigVerifier,
+        poller: AsyncPoller
+    ) : this(
         configFetcher,
         File(
             context.filesDir,
             "com.rakuten.tech.mobile.remoteconfig.configcache.json"
         ),
-        AsyncPoller(DELAY_IN_MINUTES),
+        poller,
         verifier
     )
 
@@ -60,10 +65,6 @@ internal class ConfigCache @VisibleForTesting constructor(
     fun getConfig(): Map<String, String> = config.values
 
     private fun emptyConfig() = Config(emptyMap(), "", "")
-
-    companion object {
-        const val DELAY_IN_MINUTES: Int = 60
-    }
 }
 
 @Serializable
