@@ -73,7 +73,7 @@ class HeadersInterceptorSpec(
                 arrayOf("App Name", "ras-app-name", "test.app.name"),
                 arrayOf("App Version", "ras-app-version", "1.0.0"),
                 arrayOf("Device Model", "ras-device-model", "test model name"),
-                arrayOf("Device Version", "ras-device-version", "2.0.0"),
+                arrayOf("Device Version", "ras-device-os", "2.0.0"),
                 arrayOf("SDK Version", "ras-sdk-version", "3.0.0")
             )
         }
