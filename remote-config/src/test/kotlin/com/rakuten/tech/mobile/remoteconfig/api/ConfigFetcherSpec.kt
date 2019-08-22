@@ -42,19 +42,18 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
     }
 
     internal fun enqueueResponse(
-        values: Map<String, String> = hashMapOf("foo" to "bar"),
+        body: Map<String, String> = hashMapOf("foo" to "bar"),
         keyId: String = "key_id_value",
         signature: String = "test_signature",
         etag: String = "etag_value"
     ) {
+        val body = Json.nonstrict.stringify(
+            (StringSerializer to StringSerializer).map,
+            body
+        )
         server.enqueue(
             MockResponse()
-                .setBody("""{
-                    "body": ${Json.nonstrict.stringify(
-                        (StringSerializer to StringSerializer).map, values
-                    )},
-                    "keyId": "$keyId"
-                }""".trimIndent())
+                .setBody("""{"body":$body,"keyId":"$keyId"}""".trimIndent())
                 .setHeader("Signature", signature)
                 .setHeader("ETag", etag)
         )
@@ -77,11 +76,14 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
 
 class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     @Test
-    fun `should fetch the config values`() {
+    fun `should fetch the config body`() {
         val fetcher = createFetcher()
-        enqueueResponse(hashMapOf("foo" to "bar"))
+        enqueueResponse(
+            body = hashMapOf("foo" to "bar"),
+            keyId = "test_key_id"
+        )
 
-        fetcher.fetch().values["foo"] shouldEqual "bar"
+        fetcher.fetch().rawBody shouldEqual """{"body":{"foo":"bar"},"keyId":"test_key_id"}"""
     }
 
     @Test

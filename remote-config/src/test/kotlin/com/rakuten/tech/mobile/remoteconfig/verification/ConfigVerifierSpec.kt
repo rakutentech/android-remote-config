@@ -6,7 +6,9 @@ import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.Config
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
-import com.rakuten.tech.mobile.remoteconfig.toInputStream
+import kotlinx.serialization.internal.StringSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.map
 import org.amshove.kluent.*
 import org.junit.Before
 import org.junit.Test
@@ -53,8 +55,15 @@ class ConfigVerifierSpec : RobolectricBaseSpec() {
 
     @Test
     fun `should verify using the values from provided Config`() {
-        val data = hashMapOf("test_key" to "test_value")
-        When calling stubSignatureVerifier.verify(any(), eq(data.toInputStream()), any()) itReturns true
+        val data = Json.stringify(
+            (StringSerializer to StringSerializer).map,
+            hashMapOf("test_key" to "test_value")
+        )
+        When calling stubSignatureVerifier.verify(
+            any(),
+            eq(data.toByteArray(Charsets.UTF_8).inputStream()),
+            any()
+        ) itReturns true
         val verifier = createVerifier()
         val config = createConfig(values = data)
 
@@ -132,7 +141,7 @@ class ConfigVerifierSpec : RobolectricBaseSpec() {
     private fun createVerifier() = ConfigVerifier(mockCache, stubSignatureVerifier)
 
     private fun createConfig(
-        values: Map<String, String> = emptyMap(),
+        values: String = "{}",
         signature: String = "test_signature",
         keyId: String = "test_key_id"
     ) = Config(values, signature, keyId)

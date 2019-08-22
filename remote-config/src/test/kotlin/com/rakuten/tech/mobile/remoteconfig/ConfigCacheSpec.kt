@@ -3,7 +3,9 @@ package com.rakuten.tech.mobile.remoteconfig
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
+import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
+import kotlinx.serialization.json.Json
 import org.amshove.kluent.*
 import org.junit.Test
 import org.robolectric.RuntimeEnvironment
@@ -67,9 +69,8 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
 
     @Test
     fun `should not cache the fetched config when verification fails`() {
-        val values = hashMapOf("foo" to "bar")
         val fileName = "cache.json"
-        When calling stubFetcher.fetch() itReturns Config(values, "", "")
+        When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
         When calling stubVerifier.verify(any()) itReturns false
         ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
 
@@ -97,14 +98,23 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         configValues: Map<String, String> = hashMapOf("testKey" to "test_value"),
         fileName: String = "cache.json"
     ): ConfigCache {
-        When calling stubFetcher.fetch() itReturns Config(configValues, "", "")
+        When calling stubFetcher.fetch() itReturns createConfig(configValues)
         When calling stubPoller.start(any()) itAnswers {
-            (it.arguments[0] as () -> Any).invoke()
+            (it.arguments[0] as () -> Unit).invoke()
         }
         When calling stubVerifier.verify(any()) itReturns true
 
         return ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
     }
+
+    private fun createConfig(values: Map<String, String>) = Config(
+        Json.stringify(
+            ConfigResponse.serializer(),
+            ConfigResponse(values, "test_key_id")
+        ),
+        "test_signature",
+        "test_key_id"
+    )
 
     private fun createFile(name: String) = File(context.filesDir, name)
 }

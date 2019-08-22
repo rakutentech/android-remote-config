@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
+import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -32,16 +33,16 @@ internal class ConfigCache @VisibleForTesting constructor(
         verifier
     )
 
-    private val config = if (file.exists()) {
+    private val configBody = if (file.exists()) {
         val config = Config.fromJsonString(file.readText())
 
         if (verifier.verify(config)) {
-            config
+            ConfigResponse.fromJsonString(config.rawBody).body
         } else {
-            emptyConfig()
+            emptyMap()
         }
     } else {
-        emptyConfig()
+        emptyMap()
     }
 
     init {
@@ -60,16 +61,14 @@ internal class ConfigCache @VisibleForTesting constructor(
         }
     }
 
-    operator fun get(key: String) = config.values[key]
+    operator fun get(key: String) = configBody[key]
 
-    fun getConfig(): Map<String, String> = config.values
-
-    private fun emptyConfig() = Config(emptyMap(), "", "")
+    fun getConfig(): Map<String, String> = configBody
 }
 
 @Serializable
 internal data class Config(
-    val values: Map<String, String>,
+    val rawBody: String,
     val signature: String,
     val keyId: String
 ) {
