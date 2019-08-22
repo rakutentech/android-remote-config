@@ -38,7 +38,7 @@ internal class HeadersInterceptor @VisibleForTesting constructor(
                 .addHeader("apiKey", "ras-$subscriptionKey")
                 .addHeader("ras-app-id", appId)
                 .addHeader("ras-device-model", deviceModel)
-                .addHeader("ras-device-version", deviceOsVersion)
+                .addHeader("ras-device-os", deviceOsVersion)
                 .addHeader("ras-sdk-name", "Remote Config")
                 .addHeader("ras-sdk-version", sdkVersion)
                 .addHeader("ras-app-name", appName)
