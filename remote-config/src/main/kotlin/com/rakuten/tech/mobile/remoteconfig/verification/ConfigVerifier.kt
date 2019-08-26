@@ -3,7 +3,6 @@ package com.rakuten.tech.mobile.remoteconfig.verification
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.rakuten.tech.mobile.remoteconfig.Config
-import com.rakuten.tech.mobile.remoteconfig.toInputStream
 
 internal class ConfigVerifier @VisibleForTesting constructor(
     private val cache: PublicKeyCache,
@@ -18,7 +17,7 @@ internal class ConfigVerifier @VisibleForTesting constructor(
             val publicKey = cache[config.keyId] ?: return false
             val isVerified = signatureVerifier.verify(
                 publicKey,
-                config.values.toInputStream(),
+                config.rawBody.toByteArray(Charsets.UTF_8).inputStream(),
                 config.signature
             )
 

@@ -18,9 +18,8 @@ internal class ConfigFetcher constructor(
             throw IOException("Unexpected response when fetching remote config: $response")
         }
 
-        val (body, keyId) = ConfigResponse.fromJsonString(
-            response.body()!!.string() // Body is never null if request is successful
-        )
+        val body = response.body()!!.string()
+        val (_body, keyId) = ConfigResponse.fromJsonString(body)
         val signature = response.header("Signature") ?: ""
 
         return Config(body, signature, keyId)
@@ -28,7 +27,7 @@ internal class ConfigFetcher constructor(
 }
 
 @Serializable
-private data class ConfigResponse(
+internal data class ConfigResponse(
     val body: Map<String, String>,
     val keyId: String
 ) {
