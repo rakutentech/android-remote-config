@@ -46,17 +46,31 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
         keyId: String = "key_id_value",
         signature: String = "test_signature",
         etag: String = "etag_value"
+    ) = enqueueResponse(createBody(body, keyId), signature, etag)
+
+    internal fun enqueueResponse(
+        body: String = createBody(),
+        signature: String = "test_signature",
+        etag: String = "etag_value"
     ) {
-        val body = Json.nonstrict.stringify(
-            (StringSerializer to StringSerializer).map,
-            body
-        )
         server.enqueue(
             MockResponse()
-                .setBody("""{"body":$body,"keyId":"$keyId"}""".trimIndent())
+                .setBody(body)
                 .setHeader("Signature", signature)
                 .setHeader("ETag", etag)
         )
+    }
+
+    internal fun createBody(
+        body: Map<String, String> = hashMapOf("foo" to "bar"),
+        keyId: String = "key_id_value"
+    ): String {
+        val bodyValue = Json.nonstrict.stringify(
+            (StringSerializer to StringSerializer).map,
+            body
+        )
+
+        return """{"body":$bodyValue,"keyId":"$keyId"}"""
     }
 
     internal fun createFetcher(
@@ -82,6 +96,18 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
             body = hashMapOf("foo" to "bar"),
             keyId = "test_key_id"
         )
+
+        fetcher.fetch().rawBody shouldEqual """{"body":{"foo":"bar"},"keyId":"test_key_id"}"""
+    }
+
+    @Test
+    fun `should trim the body`() {
+        val fetcher = createFetcher()
+        val body = "\n${createBody(
+            body = hashMapOf("foo" to "bar"),
+            keyId = "test_key_id"
+        )}\n"
+        enqueueResponse(body = body)
 
         fetcher.fetch().rawBody shouldEqual """{"body":{"foo":"bar"},"keyId":"test_key_id"}"""
     }
