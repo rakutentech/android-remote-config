@@ -19,6 +19,7 @@ internal class ConfigFetcher constructor(
         }
 
         val body = response.body()!!.string()
+            .trim() // OkHttp sometimes adds an extra newline character when caching the response
         val (_body, keyId) = ConfigResponse.fromJsonString(body)
         val signature = response.header("Signature") ?: ""
 
