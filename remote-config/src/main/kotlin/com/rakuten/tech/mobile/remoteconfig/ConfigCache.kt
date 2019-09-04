@@ -34,10 +34,10 @@ internal class ConfigCache @VisibleForTesting constructor(
     )
 
     private val configBody = if (file.exists()) {
-        val config = Config.fromJsonString(file.readText())
+        val text = file.readText()
 
-        if (verifier.verify(config)) {
-            ConfigResponse.fromJsonString(config.rawBody).body
+        if (text.isNotBlank()) {
+            parseConfigBody(text) ?: emptyMap()
         } else {
             emptyMap()
         }
@@ -64,6 +64,19 @@ internal class ConfigCache @VisibleForTesting constructor(
     operator fun get(key: String) = configBody[key]
 
     fun getConfig(): Map<String, String> = configBody
+
+    private fun parseConfigBody(fileText: String) = try {
+        val config = Config.fromJsonString(fileText)
+
+        if (verifier.verify(config)) {
+            ConfigResponse.fromJsonString(config.rawBody).body
+        } else {
+            null
+        }
+    } catch (exception: Exception) {
+        Log.e("RemoteConfig", "Error parsing config from cached file", exception)
+        null
+    }
 }
 
 @Serializable

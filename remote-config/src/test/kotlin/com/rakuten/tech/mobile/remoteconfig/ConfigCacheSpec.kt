@@ -23,7 +23,43 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     fun `should be empty by default`() {
         val cache = ConfigCache(context, stubFetcher, stubVerifier, stubPoller)
 
-        cache["foo"] shouldBe null
+        cache.getConfig() shouldEqual emptyMap()
+    }
+
+    @Test
+    fun `should not apply the cached config if it is blank`() {
+        val file = createFile("cache.json")
+        file.writeText("")
+        val cache = `create cache with fetched config`(
+            file = file,
+            configValues = hashMapOf("foo" to "bar")
+        )
+
+        cache.getConfig() shouldEqual emptyMap()
+    }
+
+    @Test
+    fun `should not apply the cached config if it is invalid`() {
+        val file = createFile("cache.json")
+        file.writeText("foo: bar")
+        val cache = `create cache with fetched config`(
+            file = file,
+            configValues = hashMapOf("foo" to "bar")
+        )
+
+        cache.getConfig() shouldEqual emptyMap()
+    }
+
+    @Test
+    fun `should not apply the cached config if it has missing keys`() {
+        val file = createFile("cache.json")
+        file.writeText("{foo: bar}")
+        val cache = `create cache with fetched config`(
+            file = file,
+            configValues = hashMapOf("foo" to "bar")
+        )
+
+        cache.getConfig() shouldEqual emptyMap()
     }
 
     @Test
@@ -54,7 +90,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     fun `should apply the cached config when fetching fails`() {
         val fileName = "cache.json"
         `create cache with fetched config`(
-            fileName = fileName,
+            file = createFile(fileName),
             configValues = hashMapOf("foo" to "bar")
         )
 
@@ -84,7 +120,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         val filename = "cache.json"
         `create cache with fetched config`(
             configValues = hashMapOf("foo" to "bar"),
-            fileName = filename
+            file = createFile(filename)
         )
 
         When calling stubVerifier.verify(any()) itReturns false
@@ -96,7 +132,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
 
     private fun `create cache with fetched config`(
         configValues: Map<String, String> = hashMapOf("testKey" to "test_value"),
-        fileName: String = "cache.json"
+        file: File = createFile("cache.json")
     ): ConfigCache {
         When calling stubFetcher.fetch() itReturns createConfig(configValues)
         When calling stubPoller.start(any()) itAnswers {
@@ -104,7 +140,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         }
         When calling stubVerifier.verify(any()) itReturns true
 
-        return ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+        return ConfigCache(stubFetcher, file, stubPoller, stubVerifier)
     }
 
     private fun createConfig(values: Map<String, String>) = Config(
