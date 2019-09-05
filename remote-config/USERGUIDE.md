@@ -62,13 +62,13 @@ This also means that the first time the App is launched, the fallback values wil
 val remoteConfig = RemoteConfig.instance()
 
 // Retrieve a String value
-val testString = remoteConfig.getString('stringKeyName', 'string_fallback_value')
+val testString = remoteConfig.getString("stringKeyName", "string_fallback_value")
 
 // Retrieve a Boolean value
-val testBoolean = remoteConfig.getBoolean('booleanKeyName', false)
+val testBoolean = remoteConfig.getBoolean("booleanKeyName", false)
 
 // Retrieve a Number value (can be Int, Short, Long, Double, Float, or Byte)
-val testNumber = remoteConfig.getNumber('numberKeyName', 1)
+val testNumber = remoteConfig.getNumber("numberKeyName", 1)
 
 // Retrieve the entire config as a Map
 val configMap = remoteConfig.getConfig()
