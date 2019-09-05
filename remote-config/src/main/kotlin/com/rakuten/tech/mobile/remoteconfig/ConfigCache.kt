@@ -26,7 +26,7 @@ internal class ConfigCache @VisibleForTesting constructor(
     ) : this(
         configFetcher,
         File(
-            context.filesDir,
+            context.noBackupFilesDir,
             "com.rakuten.tech.mobile.remoteconfig.configcache.json"
         ),
         poller,
