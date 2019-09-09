@@ -75,3 +75,7 @@ val configMap = remoteConfig.getConfig()
 ```
 
 ## Changelog
+
+### v1.0.0 (2019-09-09)
+
+- Initial release.
