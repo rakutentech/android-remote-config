@@ -6,7 +6,6 @@ import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import junit.framework.TestCase
 import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonUnknownKeyException
 import kotlinx.serialization.map
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -194,7 +193,7 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
 
         try {
             fetcher.fetch()
-        } catch (e: JsonUnknownKeyException) {
+        } catch (e: Exception) {
             TestCase.fail("Should not throw an exception when there are extra keys in response.")
             throw e
         }
