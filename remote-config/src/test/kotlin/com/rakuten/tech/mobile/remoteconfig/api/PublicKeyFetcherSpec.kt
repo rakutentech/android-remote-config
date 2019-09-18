@@ -1,5 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import junit.framework.TestCase
 import okhttp3.mockwebserver.MockResponse
@@ -9,7 +11,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.robolectric.RuntimeEnvironment
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.LogManager
@@ -19,7 +20,7 @@ open class PublicKeyFetcherSpec : RobolectricBaseSpec() {
     val server = MockWebServer()
     lateinit var baseUrl: String
 
-    private val context = RuntimeEnvironment.application
+    private val context = ApplicationProvider.getApplicationContext<Context>()
 
     init {
         LogManager.getLogManager()

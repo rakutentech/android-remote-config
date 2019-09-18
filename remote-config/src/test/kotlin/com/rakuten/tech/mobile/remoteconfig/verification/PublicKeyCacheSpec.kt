@@ -1,6 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig.verification
 
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
@@ -11,7 +12,6 @@ import org.amshove.kluent.itReturns
 import org.amshove.kluent.shouldEqual
 import org.junit.Before
 import org.junit.Test
-import org.robolectric.RuntimeEnvironment
 import java.io.File
 
 class PublicKeyCacheSpec : RobolectricBaseSpec() {
@@ -58,7 +58,7 @@ class PublicKeyCacheSpec : RobolectricBaseSpec() {
 
     @Test
     fun `should be empty when file is empty`() {
-        val context = RuntimeEnvironment.application
+        val context: Context = ApplicationProvider.getApplicationContext()
         val file = File(context.cacheDir, "keys.json")
         file.writeText(" ")
 
@@ -101,7 +101,7 @@ class PublicKeyCacheSpec : RobolectricBaseSpec() {
 
     private fun createCache(
         fetcher: PublicKeyFetcher = stubFetcher,
-        context: Context = RuntimeEnvironment.application,
+        context: Context = ApplicationProvider.getApplicationContext(),
         file: File = File(context.cacheDir, "keys.json"),
         encryptor: Encryptor = stubEncryptor
     ) = PublicKeyCache(fetcher, context, file, encryptor)

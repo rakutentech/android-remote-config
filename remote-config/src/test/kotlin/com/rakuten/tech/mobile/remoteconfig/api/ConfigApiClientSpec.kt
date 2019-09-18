@@ -1,5 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -9,7 +11,6 @@ import org.amshove.kluent.shouldStartWith
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.robolectric.RuntimeEnvironment
 import java.util.logging.Level
 import java.util.logging.LogManager
 
@@ -17,7 +18,7 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
     private val server = MockWebServer()
     private lateinit var baseUrl: String
 
-    private val context = RuntimeEnvironment.application
+    private val context = ApplicationProvider.getApplicationContext<Context>()
 
     init {
         LogManager.getLogManager()

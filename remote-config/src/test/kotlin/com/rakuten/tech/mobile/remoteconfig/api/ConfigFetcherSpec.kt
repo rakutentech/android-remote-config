@@ -1,5 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import junit.framework.TestCase
 import kotlinx.serialization.internal.StringSerializer
@@ -13,7 +15,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.robolectric.RuntimeEnvironment
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.LogManager
@@ -22,7 +23,7 @@ import java.util.logging.LogManager
 open class ConfigFetcherSpec : RobolectricBaseSpec() {
 
     val server = MockWebServer()
-    val context = RuntimeEnvironment.application
+    val context = ApplicationProvider.getApplicationContext<Context>()
     lateinit var baseUrl: String
 
     init {
