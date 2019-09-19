@@ -1,5 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
@@ -8,13 +10,12 @@ import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import kotlinx.serialization.json.Json
 import org.amshove.kluent.*
 import org.junit.Test
-import org.robolectric.RuntimeEnvironment
 import java.io.File
 import java.io.IOException
 
 class ConfigCacheSpec : RobolectricBaseSpec() {
 
-    private val context = RuntimeEnvironment.application.applicationContext
+    private val context = ApplicationProvider.getApplicationContext<Context>().applicationContext
     private val stubFetcher: ConfigFetcher = mock()
     private val stubPoller: AsyncPoller = mock()
     private val stubVerifier: ConfigVerifier = mock()

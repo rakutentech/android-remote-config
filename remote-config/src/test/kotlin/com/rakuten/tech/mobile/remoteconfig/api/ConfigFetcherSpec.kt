@@ -1,10 +1,11 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import junit.framework.TestCase
 import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonUnknownKeyException
 import kotlinx.serialization.map
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -13,7 +14,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.robolectric.RuntimeEnvironment
 import java.io.IOException
 import java.util.logging.Level
 import java.util.logging.LogManager
@@ -22,7 +22,7 @@ import java.util.logging.LogManager
 open class ConfigFetcherSpec : RobolectricBaseSpec() {
 
     val server = MockWebServer()
-    val context = RuntimeEnvironment.application
+    val context = ApplicationProvider.getApplicationContext<Context>()
     lateinit var baseUrl: String
 
     init {
@@ -193,7 +193,7 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
 
         try {
             fetcher.fetch()
-        } catch (e: JsonUnknownKeyException) {
+        } catch (e: Exception) {
             TestCase.fail("Should not throw an exception when there are extra keys in response.")
             throw e
         }

@@ -12,6 +12,7 @@ import java.io.File
 internal class PublicKeyCache @VisibleForTesting constructor(
     private val keyFetcher: PublicKeyFetcher,
     context: Context,
+    private val file: File,
     private val encryptor: Encryptor
 ) {
 
@@ -21,16 +22,16 @@ internal class PublicKeyCache @VisibleForTesting constructor(
     ) : this(
         keyFetcher,
         context,
+        File(
+            context.noBackupFilesDir,
+            "com.rakuten.tech.mobile.remoteconfig.publickeys.json"
+        ),
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             AesEncryptor()
         else
             RsaEncryptor(context)
     )
 
-    private val file = File(
-        context.noBackupFilesDir,
-        "com.rakuten.tech.mobile.remoteconfig.publickeys.json"
-    )
     private val keys = if (file.exists()) {
         val text = file.readText()
 

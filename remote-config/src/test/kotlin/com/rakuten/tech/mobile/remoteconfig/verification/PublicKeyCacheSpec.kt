@@ -1,6 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig.verification
 
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
@@ -11,7 +12,7 @@ import org.amshove.kluent.itReturns
 import org.amshove.kluent.shouldEqual
 import org.junit.Before
 import org.junit.Test
-import org.robolectric.RuntimeEnvironment
+import java.io.File
 
 class PublicKeyCacheSpec : RobolectricBaseSpec() {
 
@@ -56,6 +57,28 @@ class PublicKeyCacheSpec : RobolectricBaseSpec() {
     }
 
     @Test
+    fun `should be empty when file is empty`() {
+        val context: Context = ApplicationProvider.getApplicationContext()
+        val file = File(context.cacheDir, "keys.json")
+        file.writeText(" ")
+
+        val cache = createCache(file = file)
+
+        cache["random_key"] shouldEqual null
+    }
+
+    @Test
+    fun `should cache the public key between App launches`() {
+        val cache = createCache()
+
+        cache.fetch("test_key_id")
+
+        val secondCache = createCache()
+
+        secondCache["test_key_id"] shouldEqual "test_public_key"
+    }
+
+    @Test
     fun `should cache the public key in an encrypted form after fetching`() {
         When calling stubEncryptor.encrypt(any()) itReturns "encrypted_publicKey"
         When calling stubEncryptor.decrypt("encrypted_publicKey") itReturns "decrypted_public_key"
@@ -66,9 +89,20 @@ class PublicKeyCacheSpec : RobolectricBaseSpec() {
         cache["test_key_id"] shouldEqual "decrypted_public_key"
     }
 
+    @Test
+    fun `should remove the public key from the cache`() {
+        val cache = createCache()
+
+        cache.fetch("test_key_id")
+        cache.remove("test_key_id")
+
+        cache["test_key_id"] shouldEqual null
+    }
+
     private fun createCache(
         fetcher: PublicKeyFetcher = stubFetcher,
-        context: Context = RuntimeEnvironment.application,
+        context: Context = ApplicationProvider.getApplicationContext(),
+        file: File = File(context.cacheDir, "keys.json"),
         encryptor: Encryptor = stubEncryptor
-    ) = PublicKeyCache(fetcher, context, encryptor)
+    ) = PublicKeyCache(fetcher, context, file, encryptor)
 }
