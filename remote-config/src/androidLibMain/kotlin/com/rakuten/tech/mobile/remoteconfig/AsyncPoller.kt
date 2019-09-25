@@ -16,7 +16,7 @@ internal class AsyncPoller @VisibleForTesting constructor(
 
     private val delayInMilliseconds = TimeUnit.MINUTES.toMillis(delayInMinutes.toLong())
 
-    fun start(method: () -> Any) {
+    fun start(method: suspend () -> Unit) {
         scope.launch {
             repeat(Int.MAX_VALUE) {
                 method.invoke()
