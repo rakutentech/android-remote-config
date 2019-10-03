@@ -1,7 +1,6 @@
 version: 2
 
-gradle_cache_key: &gradle_cache_key gradle-{{ checksum "build.gradle" }}-{{ checksum "remote-config/build.gradle" }}
-maven_cache_key: &maven_cache_key maven-{{ checksum "remote-config/src/test/kotlin/com/rakuten/tech/mobile/remoteconfig/RobolectricBaseSpec.kt" }}
+gradle_cache_key: &gradle_cache_key gradle-{{ checksum "build.gradle" }}-{{ checksum "settings.gradle" }}
 
 jobs:
   build:
@@ -18,23 +17,16 @@ jobs:
     - run:
         name: Download Dependencies
         command: ./gradlew androidDependencies
-    - save_cache:
-        paths:
-        - ~/.gradle
-        key: *gradle_cache_key
-    - restore_cache:
-        ## Robolectric uses maven to download sources, so we must use a different cache for maven
-        key: *maven_cache_key
     - run:
         name: Run Tests
         command: ./gradlew check
+    - run:
+        name: Assemble
+        command: ./gradlew assemble
     - save_cache:
         paths:
-        - ~/.m2
-        key: *maven_cache_key
-    - run:
-        name: Assemble AAR
-        command: ./gradlew assemble
+          - ~/.gradle
+        key: *gradle_cache_key
     - run:
         name: Current Version
         command: ./gradlew currentVersion

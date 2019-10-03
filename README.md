@@ -1,43 +1,34 @@
-[![Download](https://api.bintray.com/packages/ssed-oss-jcenter/ssed-mobile-libs/android-remote-config/images/download.svg)](https://bintray.com/ssed-oss-jcenter/ssed-mobile-libs/android-remote-config/_latestVersion)
-[![CircleCI](https://circleci.com/gh/rakutentech/android-remote-config.svg?style=svg)](https://circleci.com/gh/rakutentech/android-remote-config)
-[![codecov](https://codecov.io/gh/rakutentech/android-remote-config/branch/master/graph/badge.svg)](https://codecov.io/gh/rakutentech/android-remote-config)
+# Remote Config SDK Multi-Platform Module
 
-# Remote Config SDK for Android
+Provides remote configuration for Android applications. This is a Multi-platform (Android and iOS) module that can be added to an existing Android or iOS project.
 
-Provides remote configuration for Android applications. See the [User Guide](./remote-config/USERGUIDE.md) for instructions on implementing in an android application.
+## How to add to your project
 
-## How to build
-
-This repository uses submodules for some configuration, so they must be initialized first.
+Add the submodule to your project and build:
 
 ```bash
-$ git submodule init
+$ git sumodule add {repo-url} shared
 $ git submodule update
-$ ./gradlew assemble
+$ ./shared/gradlew assemble
 ```
 
-If you wish to publish an artifact to JCenter, you must set the Bintray credentials as environment variables.
+After you have commited the submodule, it can be initialized on a fresh repo clone using the following:
 
 ```bash
-$ export BINTRAY_USER=user_name
-$ export BINTRAY_KEY=key
-$ export BINTRY_REPO=repo_name
+$ git sumodule update --init
 ```
 
-## How to test the Sample app
+### Android
 
-You must first define your API base url, App Id, and subscription key as either environment variables or as gradle properties (such as in your global `~/.gradle/gradle.properties` file).
+Add the `shared` module to your `settings.gradle` file:
 
 ```
-REMOTE_CONFIG_APP_ID=your_app_id
-REMOTE_CONFIG_SUBSCRIPTION_KEY=your_subscription_key
-REMOTE_CONFIG_BASE_URL=https://www.example.com/
+include ':shared'
 ```
 
-## How to use it
+### iOS
 
-Currently we do not host any public APIs but you can create your own APIs and configure the SDK to use those.
+Add one of the following framework path to your XCode project:
 
-## Contributing
-
-See [Contribution guidelines](./CONTRIBUTING.md)
+- `shared/build/bin/ios/SharedCodeDebugFramework`
+- `shared/build/bin/ios/SharedCodeReleaseFramework`
