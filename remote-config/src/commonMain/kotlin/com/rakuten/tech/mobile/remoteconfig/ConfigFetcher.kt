@@ -6,11 +6,6 @@ import io.ktor.client.request.header
 import io.ktor.client.response.readText
 import io.ktor.client.response.HttpResponse
 import io.ktor.http.Url
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.io.IOException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.jvm.Transient
@@ -29,7 +24,7 @@ internal class ConfigFetcher constructor(
             header("apiKey", "ras-$subscriptionKey")
         }
 
-        if (response.status.value > 300) {
+        if (response.status.value >= HTTP_STATUS_300) {
             throw ResponseException(response)
         }
 
@@ -38,6 +33,7 @@ internal class ConfigFetcher constructor(
 
     companion object {
         private const val CACHE_SIZE = 1024 * 1024 * 2L
+        private const val HTTP_STATUS_300 = 300
     }
 }
 
@@ -54,5 +50,5 @@ private data class ConfigResponse(val body: Map<String, String>) {
  * @param response: origin response
  */
 open class ResponseException(
-        @Transient val response: HttpResponse
+    @Transient val response: HttpResponse
 ) : IllegalStateException("Bad response: $response")

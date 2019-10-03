@@ -3,8 +3,6 @@ package com.rakuten.tech.mobile.remoteconfig
 import android.content.Context
 import android.util.Log
 import androidx.annotation.VisibleForTesting
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
