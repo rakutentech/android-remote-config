@@ -3,11 +3,8 @@ package com.rakuten.tech.mobile.remoteconfig
 import android.content.Context
 import android.util.Log
 import androidx.annotation.VisibleForTesting
-import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.io.File
 
 @Suppress("TooGenericExceptionCaught")
@@ -47,17 +44,15 @@ internal class ConfigCache @VisibleForTesting constructor(
 
     init {
         poller.start {
-            try {
-                val fetchedConfig = fetcher.fetch()
-
+            fetcher.fetch(response = { fetchedConfig ->
                 verifier.ensureFetchedKey(fetchedConfig.keyId)
 
                 if (verifier.verify(fetchedConfig)) {
                     file.writeText(fetchedConfig.toJsonString())
                 }
-            } catch (error: Exception) {
-                Log.e("RemoteConfig", "Error while fetching config from server", error)
-            }
+            }, error = { exception ->
+                Log.e("RemoteConfig", "Error while fetching config from server", exception)
+            })
         }
     }
 
@@ -79,16 +74,4 @@ internal class ConfigCache @VisibleForTesting constructor(
     }
 }
 
-@Serializable
-internal data class Config(
-    val rawBody: String,
-    val signature: String,
-    val keyId: String
-) {
 
-    fun toJsonString() = Json.stringify(serializer(), this)
-
-    companion object {
-        fun fromJsonString(body: String) = Json.nonstrict.parse(serializer(), body)
-    }
-}

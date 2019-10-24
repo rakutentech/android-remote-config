@@ -6,6 +6,7 @@ import androidx.annotation.VisibleForTesting
 import com.rakuten.tech.mobile.remoteconfig.BuildConfig
 import okhttp3.Interceptor
 import okhttp3.Response
+import java.util.*
 
 internal class HeadersInterceptor @VisibleForTesting constructor(
     private val appId: String,
@@ -33,6 +34,7 @@ internal class HeadersInterceptor @VisibleForTesting constructor(
     )
 
     override fun intercept(chain: Interceptor.Chain): Response {
+        Locale.getDefault()
         return chain.proceed(
             chain.request().newBuilder()
                 .addHeader("apiKey", "ras-$subscriptionKey")

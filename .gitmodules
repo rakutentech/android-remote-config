@@ -1,3 +1,6 @@
 [submodule "config"]
 	path = config
 	url = https://github.com/rakutentech/android-buildconfig.git
+[submodule "shared"]
+	path = shared
+	url = https://github.com/rakutentech/android-remote-config.git

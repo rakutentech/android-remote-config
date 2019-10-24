@@ -2,6 +2,7 @@ package com.rakuten.tech.mobile.remoteconfig
 
 import android.content.ContentProvider
 import android.content.ContentValues
+import android.content.Context.MODE_PRIVATE
 import android.database.Cursor
 import android.net.Uri
 import com.rakuten.tech.mobile.manifestconfig.annotations.ManifestConfig
@@ -71,8 +72,9 @@ class RemoteConfigInitProvider : ContentProvider() {
             )
         )
         val configFetcher = ConfigFetcher(
+            baseUrl = manifestConfig.baseUrl(),
             appId = manifestConfig.appId(),
-            client = client
+            subscriptionKey = manifestConfig.subscriptionKey()
         )
         val cache = ConfigCache(
             context = context,
