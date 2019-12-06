@@ -12,7 +12,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.jvm.Transient
 
-class ConfigFetcher2 constructor(
+expect class ConfigFetcher {
+    fun fetch(response: (Config) -> Unit)
+}
+
+internal class RealConfigFetcher constructor(
     baseUrl: String,
     appId: String,
     private val subscriptionKey: String
@@ -23,9 +27,10 @@ class ConfigFetcher2 constructor(
             serializer = KotlinxSerializer()
         }
     }
-    var address = Url("${baseUrl}app/$appId/config")
+    var address = Url("${baseUrl}/app/$appId/config")
 
     suspend fun fetch(): Config {
+
         val response = client.get<HttpResponse>(address) {
             header("apiKey", "ras-$subscriptionKey")
         }
