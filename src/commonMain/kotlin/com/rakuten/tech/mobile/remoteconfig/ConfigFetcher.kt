@@ -8,29 +8,52 @@ import io.ktor.client.request.header
 import io.ktor.client.response.readText
 import io.ktor.client.response.HttpResponse
 import io.ktor.http.Url
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.jvm.Transient
 
-expect class ConfigFetcher {
-    fun fetch(response: (Config) -> Unit)
-}
+internal expect val ApplicationDispatcher: CoroutineDispatcher
 
-internal class RealConfigFetcher constructor(
+class ConfigFetcher internal constructor(
     baseUrl: String,
     appId: String,
-    private val subscriptionKey: String
+    private val subscriptionKey: String,
+    private val scope: CoroutineScope
 ) {
+
+    constructor(
+        baseUrl: String,
+        appId: String,
+        subscriptionKey: String
+    ) : this (
+        baseUrl = baseUrl,
+        appId = appId,
+        subscriptionKey = subscriptionKey,
+        scope = CoroutineScope(ApplicationDispatcher)
+    )
 
     private val client = HttpClient {
         install(JsonFeature) {
             serializer = KotlinxSerializer()
         }
     }
-    var address = Url("${baseUrl}/app/$appId/config")
+    private val address = Url("${baseUrl}/app/$appId/config")
 
-    suspend fun fetch(): Config {
+    fun fetch(response: (Config) -> Unit, error: (Exception) -> Unit) {
+        scope.launch {
+            try {
+                val config = fetchConfig()
+                response(config)
+            } catch (exception: ResponseException) {
+                error(exception)
+            }
+        }
+    }
 
+    private suspend fun fetchConfig(): Config {
         val response = client.get<HttpResponse>(address) {
             header("apiKey", "ras-$subscriptionKey")
         }
