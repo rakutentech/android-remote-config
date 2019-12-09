@@ -14,6 +14,7 @@ import kotlin.jvm.Transient
 internal expect val ApplicationDispatcher: CoroutineDispatcher
 
 class ConfigApiClient internal constructor(
+    private val platformClient: HttpClient,
     private val baseUrl: String,
     private val appId: String,
     private val subscriptionKey: String,
@@ -21,10 +22,12 @@ class ConfigApiClient internal constructor(
 ) {
 
     constructor(
+        platformClient: HttpClient,
         baseUrl: String,
         appId: String,
         subscriptionKey: String
     ) : this (
+        platformClient = platformClient,
         baseUrl = baseUrl,
         appId = appId,
         subscriptionKey = subscriptionKey,
@@ -32,7 +35,7 @@ class ConfigApiClient internal constructor(
     )
 
     private val url = "${baseUrl}/app/$appId"
-    private val client = HttpClient {
+    private val client = platformClient.config {
         install(JsonFeature) {
             serializer = KotlinxSerializer()
         }
@@ -53,11 +56,6 @@ class ConfigApiClient internal constructor(
                 error(exception)
             }
         }
-    }
-
-    companion object {
-        private const val CACHE_SIZE = 1024 * 1024 * 2L
-        private const val HTTP_STATUS_300 = 300
     }
 }
 
