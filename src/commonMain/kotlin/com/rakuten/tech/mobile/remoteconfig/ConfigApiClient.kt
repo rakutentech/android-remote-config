@@ -18,6 +18,11 @@ class ConfigApiClient internal constructor(
     private val baseUrl: String,
     private val appId: String,
     private val subscriptionKey: String,
+    private val deviceModel: String,
+    private val osVersion: String,
+    private val appName: String,
+    private val appVersion: String,
+    private val sdkVersion: String,
     private val scope: CoroutineScope
 ) {
 
@@ -25,12 +30,22 @@ class ConfigApiClient internal constructor(
         platformClient: HttpClient,
         baseUrl: String,
         appId: String,
-        subscriptionKey: String
+        subscriptionKey: String,
+        deviceModel: String,
+        osVersion: String,
+        appName: String,
+        appVersion: String,
+        sdkVersion: String
     ) : this (
         platformClient = platformClient,
         baseUrl = baseUrl,
         appId = appId,
         subscriptionKey = subscriptionKey,
+        deviceModel = deviceModel,
+        osVersion = osVersion,
+        appName = appName,
+        appVersion = appVersion,
+        sdkVersion = sdkVersion,
         scope = CoroutineScope(ApplicationDispatcher)
     )
 
@@ -41,6 +56,13 @@ class ConfigApiClient internal constructor(
         }
         defaultRequest {
             header("apiKey" , "ras-$subscriptionKey")
+            header("ras-app-id", appId)
+            header("ras-device-model", deviceModel)
+            header("ras-os-version", osVersion)
+            header("ras-sdk-name", "Remote Config")
+            header("ras-sdk-version", sdkVersion)
+            header("ras-app-name", appName)
+            header("ras-app-version", appVersion)
         }
     }
 

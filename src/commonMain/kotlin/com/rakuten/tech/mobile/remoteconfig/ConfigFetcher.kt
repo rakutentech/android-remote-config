@@ -1,23 +1,13 @@
 package com.rakuten.tech.mobile.remoteconfig
 
 import io.ktor.client.HttpClient
-import io.ktor.client.features.defaultRequest
-import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.features.json.serializer.KotlinxSerializer
-import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.response.readText
 import io.ktor.client.response.HttpResponse
 import io.ktor.http.Url
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.jvm.Transient
-
 
 class ConfigFetcher internal constructor(
     private val client: HttpClient,

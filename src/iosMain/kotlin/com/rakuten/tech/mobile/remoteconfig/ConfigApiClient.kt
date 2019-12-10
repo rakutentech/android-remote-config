@@ -7,17 +7,6 @@ import platform.Foundation.NSURLRequestUseProtocolCachePolicy
 
 internal actual val ApplicationDispatcher = Dispatchers.Current
 
-fun createConfigApiClient(
-    baseUrl: String,
-    appId: String,
-    subscriptionKey: String
-) = ConfigApiClient(
-    platformClient = createHttpClient(),
-    baseUrl = baseUrl,
-    appId = appId,
-    subscriptionKey = subscriptionKey
-)
-
 fun createHttpClient() = HttpClient(Ios) {
     engine {
         configureRequest {

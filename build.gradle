@@ -60,7 +60,7 @@ kotlin {
 
     jvmMain.dependencies {
       implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin"
-      implementation "io.ktor:ktor-client-core-jvm:$versions.ktor"
+      api "io.ktor:ktor-client-core-jvm:$versions.ktor"
       implementation ("io.ktor:ktor-client-okhttp:$versions.ktor") {
         exclude group: 'com.squareup.okhttp3'
       }
@@ -73,7 +73,7 @@ kotlin {
     }
 
     iosMain.dependencies {
-      implementation "io.ktor:ktor-client-ios:$versions.ktor"
+      api "io.ktor:ktor-client-ios:$versions.ktor"
       implementation "io.ktor:ktor-client-core-native:$versions.ktor"
       implementation "io.ktor:ktor-client-json-native:$versions.ktor"
       implementation "io.ktor:ktor-client-serialization-native:$versions.ktor"
