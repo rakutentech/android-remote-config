@@ -6,10 +6,6 @@ import io.ktor.http.headersOf
 import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.map
-import org.amshove.kluent.shouldContain
-import org.amshove.kluent.shouldEndWith
-import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldStartWith
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -68,7 +64,7 @@ open class ConfigFetcherSpec {
         url: String = baseUrl,
         appId: String = "test_app_id",
         subscriptionKey: String = "test_subscription_key"
-    ) = ConfigFetcher(
+    ) = ConfigRequest(
         baseUrl = url,
         appId = appId,
         subscriptionKey = subscriptionKey

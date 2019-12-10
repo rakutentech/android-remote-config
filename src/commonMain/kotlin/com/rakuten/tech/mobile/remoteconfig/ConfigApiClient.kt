@@ -14,15 +14,15 @@ import kotlin.jvm.Transient
 internal expect val ApplicationDispatcher: CoroutineDispatcher
 
 class ConfigApiClient internal constructor(
-    private val platformClient: HttpClient,
+    platformClient: HttpClient,
     private val baseUrl: String,
     private val appId: String,
-    private val subscriptionKey: String,
-    private val deviceModel: String,
-    private val osVersion: String,
-    private val appName: String,
-    private val appVersion: String,
-    private val sdkVersion: String,
+    subscriptionKey: String,
+    deviceModel: String,
+    osVersion: String,
+    appName: String,
+    appVersion: String,
+    sdkVersion: String,
     private val scope: CoroutineScope
 ) {
 
@@ -49,7 +49,6 @@ class ConfigApiClient internal constructor(
         scope = CoroutineScope(ApplicationDispatcher)
     )
 
-    private val url = "${baseUrl}/app/$appId"
     private val client = platformClient.config {
         install(JsonFeature) {
             serializer = KotlinxSerializer()
@@ -66,14 +65,36 @@ class ConfigApiClient internal constructor(
         }
     }
 
-    fun fetchConfig(response: (Config) -> Unit, error: (Exception) -> Unit) {
+    fun fetchConfig(
+        success: (Config) -> Unit,
+        error: (Exception) -> Unit
+    ) {
         scope.launch {
             try {
-                val config = ConfigFetcher(
-                    client = client,
-                    baseUrl = url
+                val config = ConfigRequest(
+                    httpClient = client,
+                    baseUrl = baseUrl,
+                    appId = appId
                 ).fetch()
-                response(config)
+                success(config)
+            } catch (exception: ResponseException) {
+                error(exception)
+            }
+        }
+    }
+
+    fun fetchPublicKey(
+        keyId: String,
+        success: (String) -> Unit,
+        error: (Exception) -> Unit
+    ) {
+        scope.launch {
+            try {
+                val key = PublicKeyRequest(
+                    httpClient = client,
+                    baseUrl = baseUrl
+                ).fetch(keyId)
+                success(key)
             } catch (exception: ResponseException) {
                 error(exception)
             }

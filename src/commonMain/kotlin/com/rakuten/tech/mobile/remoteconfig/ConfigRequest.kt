@@ -4,21 +4,19 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.response.readText
 import io.ktor.client.response.HttpResponse
-import io.ktor.http.Url
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-class ConfigFetcher internal constructor(
-    private val client: HttpClient,
-    baseUrl: String
+class ConfigRequest internal constructor(
+    private val httpClient: HttpClient,
+    private val baseUrl: String,
+    private val appId: String
 ) {
-    private val address = Url("${baseUrl}/config")
 
     suspend fun fetch(): Config {
-        val response = client.get<HttpResponse>(address)
+        val response = httpClient.get<HttpResponse>("${baseUrl}/app/$appId/config")
 
-        response.status.isSuccess()
         if (!response.status.isSuccess()) {
             throw ResponseException(response)
         }
