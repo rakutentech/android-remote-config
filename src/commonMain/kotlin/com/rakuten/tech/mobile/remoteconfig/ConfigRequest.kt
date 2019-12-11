@@ -15,23 +15,28 @@ class ConfigRequest internal constructor(
 ) {
 
     suspend fun fetch(): Config {
-        val response = httpClient.get<HttpResponse>("${baseUrl}/app/$appId/config")
+        val response: HttpResponse = httpClient.get("${baseUrl}/app/$appId/config")
 
         if (!response.status.isSuccess()) {
             throw ResponseException(response)
         }
 
-        val body = response.readText()
+        val rawBody = response.readText()
             .trim() // OkHttp sometimes adds an extra newline character when caching the response
-        val (_body, keyId) = ConfigResponse.fromJsonString(body)
+        val (body, keyId) = ConfigResponse.fromJsonString(rawBody)
         val signature = response.headers["Signature"] ?: ""
 
-        return Config(body, signature, keyId)
+        return Config(
+            rawBody = rawBody,
+            body = body,
+            signature = signature,
+            keyId = keyId
+        )
     }
 }
 
 @Serializable
-internal data class ConfigResponse(
+private data class ConfigResponse(
     val body: Map<String, String>,
     val keyId: String
 ) {
@@ -44,6 +49,7 @@ internal data class ConfigResponse(
 @Serializable
 data class Config(
     val rawBody: String,
+    val body: Map<String, String>,
     val signature: String,
     val keyId: String
 ) {

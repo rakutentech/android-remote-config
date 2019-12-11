@@ -4,8 +4,10 @@ import io.ktor.client.HttpClient
 import io.ktor.client.features.defaultRequest
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
+import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.response.HttpResponse
+import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -13,69 +15,52 @@ import kotlin.jvm.Transient
 
 internal expect val ApplicationDispatcher: CoroutineDispatcher
 
-class ConfigApiClient internal constructor(
+class ConfigApiClient(
     platformClient: HttpClient,
-    private val baseUrl: String,
+    baseUrl: String,
     private val appId: String,
     subscriptionKey: String,
     deviceModel: String,
     osVersion: String,
     appName: String,
     appVersion: String,
-    sdkVersion: String,
-    private val scope: CoroutineScope
+    sdkVersion: String
 ) {
 
-    constructor(
-        platformClient: HttpClient,
-        baseUrl: String,
-        appId: String,
-        subscriptionKey: String,
-        deviceModel: String,
-        osVersion: String,
-        appName: String,
-        appVersion: String,
-        sdkVersion: String
-    ) : this (
+    private val baseUrl = baseUrl.trimEnd { it == '/' }
+    private val scope = CoroutineScope(ApplicationDispatcher)
+    private val client = createDefaultHttpClient(
         platformClient = platformClient,
-        baseUrl = baseUrl,
         appId = appId,
         subscriptionKey = subscriptionKey,
         deviceModel = deviceModel,
         osVersion = osVersion,
         appName = appName,
         appVersion = appVersion,
-        sdkVersion = sdkVersion,
-        scope = CoroutineScope(ApplicationDispatcher)
+        sdkVersion = sdkVersion
     )
-
-    private val client = platformClient.config {
-        install(JsonFeature) {
-            serializer = KotlinxSerializer()
-        }
-        defaultRequest {
-            header("apiKey" , "ras-$subscriptionKey")
-            header("ras-app-id", appId)
-            header("ras-device-model", deviceModel)
-            header("ras-os-version", osVersion)
-            header("ras-sdk-name", "Remote Config")
-            header("ras-sdk-version", sdkVersion)
-            header("ras-app-name", appName)
-            header("ras-app-version", appVersion)
-        }
-    }
 
     fun fetchConfig(
         success: (Config) -> Unit,
         error: (Exception) -> Unit
+    ) = fetchConfig(
+        success = success,
+        error = error,
+        request = ConfigRequest(
+            httpClient = client,
+            baseUrl = baseUrl,
+            appId = appId
+        )
+    )
+
+    internal fun fetchConfig(
+        success: (Config) -> Unit,
+        error: (Exception) -> Unit,
+        request: ConfigRequest
     ) {
         scope.launch {
             try {
-                val config = ConfigRequest(
-                    httpClient = client,
-                    baseUrl = baseUrl,
-                    appId = appId
-                ).fetch()
+                val config = request.fetch()
                 success(config)
             } catch (exception: ResponseException) {
                 error(exception)
@@ -87,13 +72,25 @@ class ConfigApiClient internal constructor(
         keyId: String,
         success: (String) -> Unit,
         error: (Exception) -> Unit
+    ) = fetchPublicKey(
+        keyId = keyId,
+        success = success,
+        error = error,
+        request = PublicKeyRequest(
+            httpClient = client,
+            baseUrl = baseUrl
+        )
+    )
+
+    internal fun fetchPublicKey(
+        keyId: String,
+        success: (String) -> Unit,
+        error: (Exception) -> Unit,
+        request: PublicKeyRequest
     ) {
         scope.launch {
             try {
-                val key = PublicKeyRequest(
-                    httpClient = client,
-                    baseUrl = baseUrl
-                ).fetch(keyId)
+                val key = request.fetch(keyId)
                 success(key)
             } catch (exception: ResponseException) {
                 error(exception)

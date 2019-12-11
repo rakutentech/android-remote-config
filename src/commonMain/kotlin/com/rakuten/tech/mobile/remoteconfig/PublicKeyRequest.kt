@@ -14,7 +14,7 @@ class PublicKeyRequest internal constructor(
 ) {
 
     suspend fun fetch(keyId: String): String {
-        val response = httpClient.get<HttpResponse>("${baseUrl}/keys/$keyId")
+        val response: HttpResponse = httpClient.get("${baseUrl}/keys/$keyId")
 
         if (!response.status.isSuccess()) {
             throw ResponseException(response)
