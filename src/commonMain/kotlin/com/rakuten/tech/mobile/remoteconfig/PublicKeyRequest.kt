@@ -8,13 +8,13 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-class PublicKeyRequest internal constructor(
+internal class PublicKeyRequest(
     private val httpClient: HttpClient,
     private val baseUrl: String
 ) {
 
     suspend fun fetch(keyId: String): String {
-        val response: HttpResponse = httpClient.get("${baseUrl}/keys/$keyId")
+        val response: HttpResponse = httpClient.get("$baseUrl/keys/$keyId")
 
         if (!response.status.isSuccess()) {
             throw ResponseException(response)

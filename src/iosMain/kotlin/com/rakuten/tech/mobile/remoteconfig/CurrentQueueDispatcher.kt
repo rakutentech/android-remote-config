@@ -3,7 +3,8 @@ package com.rakuten.tech.mobile.remoteconfig
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
-import platform.darwin.*
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_current_queue
 import kotlin.coroutines.CoroutineContext
 
 internal object CurrentQueueDispatcher : CoroutineDispatcher() {

@@ -7,6 +7,9 @@ import platform.Foundation.NSURLRequestUseProtocolCachePolicy
 
 internal actual val ApplicationDispatcher = Dispatchers.Current
 
+/**
+ * Creates the platform specific HttpClient for iOS.
+ */
 fun createHttpClient() = HttpClient(Ios) {
     engine {
         configureRequest {

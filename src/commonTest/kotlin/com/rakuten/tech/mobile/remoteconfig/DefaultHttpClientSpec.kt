@@ -21,8 +21,8 @@ class DefaultHttpClientSpec {
         "ras-sdk-version" to "3.0.0"
     )
 
-
     @Test
+    @Suppress("LongMethod")
     fun `should attach ras headers`() = runBlockingTest {
         var headers: Headers = Headers.Empty
         val client = HttpClient(MockEngine) {

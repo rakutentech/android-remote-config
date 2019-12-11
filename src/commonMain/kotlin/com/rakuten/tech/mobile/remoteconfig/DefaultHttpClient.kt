@@ -6,7 +6,8 @@ import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.header
 
-fun createDefaultHttpClient(
+@Suppress("LongParameterList", "LongMethod")
+internal fun createDefaultHttpClient(
     platformClient: HttpClient,
     appId: String,
     subscriptionKey: String,
@@ -20,7 +21,7 @@ fun createDefaultHttpClient(
         serializer = KotlinxSerializer()
     }
     defaultRequest {
-        header("apiKey" , "ras-$subscriptionKey")
+        header("apiKey", "ras-$subscriptionKey")
         header("ras-app-id", appId)
         header("ras-device-model", deviceModel)
         header("ras-os-version", osVersion)

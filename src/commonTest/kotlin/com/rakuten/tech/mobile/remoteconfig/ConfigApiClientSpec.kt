@@ -54,7 +54,6 @@ class ConfigApiClientSpec {
         config shouldEqual "test_public_key"
     }
 
-
     private fun createHttpClient(
         responseBody: String = "",
         responseHandler: suspend (request: HttpRequestData) -> HttpResponseData =
@@ -65,6 +64,7 @@ class ConfigApiClientSpec {
         }
     }
 
+    @Suppress("LongMethod")
     private fun createClient(
         platformClient: HttpClient = createHttpClient(),
         baseUrl: String = "https://www.example.com",

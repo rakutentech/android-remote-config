@@ -48,7 +48,6 @@ open class PublicKeyFetcherSpec {
         httpClient = client,
         baseUrl = url
     )
-
 }
 
 class PublicKeyFetcherNormalSpec : PublicKeyFetcherSpec() {
@@ -66,7 +65,7 @@ class PublicKeyFetcherNormalSpec : PublicKeyFetcherSpec() {
     fun `should fetch the public key for the provided key id`() = runBlockingTest {
         var path: String = ""
         val client = createClient(
-            responseHandler = {request ->
+            responseHandler = { request ->
                 path = request.url.fullPath
                 respond(createResponseBody())
             }
@@ -151,7 +150,7 @@ class PublicKeyFetcherErrorSpec : PublicKeyFetcherSpec() {
     }
 
     @Test
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "LongMethod")
     fun `should not throw when there are extra keys in the response`() = runBlockingTest {
         val request = createKeyRequest(
             createClient(responseHandler = {

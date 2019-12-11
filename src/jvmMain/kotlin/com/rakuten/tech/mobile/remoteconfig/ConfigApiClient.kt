@@ -10,6 +10,9 @@ internal actual val ApplicationDispatcher = Dispatchers.Default
 
 private const val CACHE_SIZE = 1024 * 1024 * 2L
 
+/**
+ * Creates the platform specific HttpClient for Android.
+ */
 fun createHttpClient(cacheDir: File) = HttpClient(OkHttp) {
     engine {
         config {

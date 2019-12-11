@@ -8,14 +8,14 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-class ConfigRequest internal constructor(
+internal class ConfigRequest(
     private val httpClient: HttpClient,
     private val baseUrl: String,
     private val appId: String
 ) {
 
     suspend fun fetch(): Config {
-        val response: HttpResponse = httpClient.get("${baseUrl}/app/$appId/config")
+        val response: HttpResponse = httpClient.get("$baseUrl/app/$appId/config")
 
         if (!response.status.isSuccess()) {
             throw ResponseException(response)
@@ -46,6 +46,9 @@ private data class ConfigResponse(
     }
 }
 
+/**
+ * Model representing config.
+ */
 @Serializable
 data class Config(
     val rawBody: String,
@@ -54,9 +57,15 @@ data class Config(
     val keyId: String
 ) {
 
+    /**
+     * Converts config to a JSON string.
+     */
     fun toJsonString() = Json.stringify(serializer(), this)
 
     companion object {
+        /**
+         * Creates config from JSON string representation.
+         */
         fun fromJsonString(body: String) = Json.nonstrict.parse(serializer(), body)
     }
 }

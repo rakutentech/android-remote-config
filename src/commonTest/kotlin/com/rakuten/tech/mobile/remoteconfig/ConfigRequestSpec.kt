@@ -67,7 +67,6 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
             ))
         )
 
-
         request.fetch().body["foo"] shouldEqual "bar"
     }
 
@@ -79,7 +78,6 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
                 keyId = "test_key_id"
             ))
         )
-
 
         request.fetch().rawBody shouldEqual """{"body":{"foo":"bar"},"keyId":"test_key_id"}"""
     }
@@ -125,7 +123,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     fun `should fetch the config from the provided url`() = runBlockingTest {
         var url: String = ""
         val client = createClient(
-            responseHandler = {request ->
+            responseHandler = { request ->
                 url = "${request.url.protocol.name}://${request.url.host}"
                 respond(createResponseBody())
             }
@@ -141,7 +139,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     fun `should fetch the config for the provided App Id`() = runBlockingTest {
         var path: String = ""
         val client = createClient(
-            responseHandler = {request ->
+            responseHandler = { request ->
                 path = request.url.fullPath
                 respond(createResponseBody())
             }
@@ -150,14 +148,14 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
         createConfigRequest(client = client, appId = "test-app-id")
             .fetch()
 
-        path shouldContain  "/app/test-app-id"
+        path shouldContain "/app/test-app-id"
     }
 
     @Test
     fun `should fetch the config from the 'config' endpoint`() = runBlockingTest {
         var path: String = ""
         val client = createClient(
-            responseHandler = {request ->
+            responseHandler = { request ->
                 path = request.url.fullPath
                 respond(createResponseBody())
             }
@@ -166,7 +164,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
         createConfigRequest(client = client)
             .fetch()
 
-        path shouldEndWith  "/config"
+        path shouldEndWith "/config"
     }
 }
 
@@ -218,7 +216,7 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "LongMethod")
     fun `should not throw when there are extra keys in the response`() = runBlockingTest {
         val request = createConfigRequest(
             createClient(responseHandler = {

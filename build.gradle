@@ -19,7 +19,7 @@ buildscript {
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
     classpath "org.jetbrains.kotlin:kotlin-serialization:$versions.kotlin"
-    classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.1.0"
+    classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.1.1"
   }
 }
 
@@ -100,6 +100,6 @@ if (!project.plugins.hasPlugin('io.gitlab.arturbosch.detekt')) {
 
   dependencies {
     // Enable the KtLint rules
-    detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:1.1.0"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:1.1.1"
   }
 }

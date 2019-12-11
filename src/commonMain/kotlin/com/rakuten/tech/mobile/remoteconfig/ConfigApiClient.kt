@@ -1,13 +1,8 @@
 package com.rakuten.tech.mobile.remoteconfig
 
 import io.ktor.client.HttpClient
-import io.ktor.client.features.defaultRequest
-import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.response.HttpResponse
-import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -15,6 +10,9 @@ import kotlin.jvm.Transient
 
 internal expect val ApplicationDispatcher: CoroutineDispatcher
 
+/**
+ * API Client used for fetching config and public key.
+ */
 class ConfigApiClient(
     platformClient: HttpClient,
     baseUrl: String,
@@ -40,6 +38,13 @@ class ConfigApiClient(
         sdkVersion = sdkVersion
     )
 
+    /**
+     * Fetch config response.
+     *
+     * @param success callback when request is successful
+     * @param error callback when request fails
+     * @returns Config response
+     */
     fun fetchConfig(
         success: (Config) -> Unit,
         error: (Exception) -> Unit
@@ -68,6 +73,14 @@ class ConfigApiClient(
         }
     }
 
+    /**
+     * Fetch public key for key id.
+     *
+     * @param keyId id of public key that should be fetched
+     * @param success callback when request is successful
+     * @param error callback when request fails
+     * @returns public key
+     */
     fun fetchPublicKey(
         keyId: String,
         success: (String) -> Unit,
