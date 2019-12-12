@@ -3,25 +3,26 @@ package com.rakuten.tech.mobile.remoteconfig.verification
 import android.content.Context
 import android.os.Build
 import androidx.annotation.VisibleForTesting
-import com.rakuten.tech.mobile.remoteconfig.api.PublicKeyFetcher
+import com.rakuten.tech.mobile.remoteconfig.ConfigApiClient
 import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.map
 import java.io.File
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 internal class PublicKeyCache @VisibleForTesting constructor(
-    private val keyFetcher: PublicKeyFetcher,
-    context: Context,
+    private val apiClient: ConfigApiClient,
     private val file: File,
     private val encryptor: Encryptor
 ) {
 
     constructor(
-        keyFetcher: PublicKeyFetcher,
+        apiClient: ConfigApiClient,
         context: Context
     ) : this(
-        keyFetcher,
-        context,
+        apiClient,
         File(
             context.noBackupFilesDir,
             "com.rakuten.tech.mobile.remoteconfig.publickeys.json"
@@ -57,8 +58,14 @@ internal class PublicKeyCache @VisibleForTesting constructor(
         file.writeText(keys.toJsonString())
     }
 
-    fun fetch(keyId: String): String {
-        val key = keyFetcher.fetch(keyId)
+    suspend fun fetch(keyId: String): String {
+        val key = suspendCoroutine<String> { continuation ->
+            apiClient.fetchPublicKey(
+                keyId,
+                { continuation.resume(it) },
+                { continuation.resumeWithException(it) }
+            )
+        }
 
         // Key is encrypted to prevent modification of the cached file (i.e. on a rooted device)
         val encryptedKey = encryptor.encrypt(key)

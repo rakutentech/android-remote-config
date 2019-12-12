@@ -6,6 +6,8 @@ import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.Config
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.map
@@ -23,7 +25,9 @@ class ConfigVerifierSpec : RobolectricBaseSpec() {
     fun setup() {
         When calling mockCache[any()] itReturns "test_public_key"
         When calling stubSignatureVerifier.verify(any(), any(), any()) itReturns true
-        When calling mockCache.fetch(any()) itReturns "test_fetched_key"
+        runBlocking {
+            When calling mockCache.fetch(any()) itReturns "test_fetched_key"
+        }
     }
 
     @Test
@@ -122,7 +126,7 @@ class ConfigVerifierSpec : RobolectricBaseSpec() {
     }
 
     @Test
-    fun `should fetch the key if it is not cached`() {
+    fun `should fetch the key if it is not cached`() = runBlockingTest {
         When calling mockCache.fetch("test_key_id") itReturns "test_fetched_key"
         When calling mockCache["test_key_id"] itReturns null
         val verifier = createVerifier()
@@ -131,7 +135,7 @@ class ConfigVerifierSpec : RobolectricBaseSpec() {
     }
 
     @Test
-    fun `should return the cached key instead of fetching if it is already cached`() {
+    fun `should return the cached key instead of fetching if it is already cached`() = runBlockingTest {
         When calling mockCache["test_key_id"] itReturns "test_cached_key"
         val verifier = createVerifier()
 
@@ -142,7 +146,13 @@ class ConfigVerifierSpec : RobolectricBaseSpec() {
 
     private fun createConfig(
         values: String = "{}",
+        body: Map<String, String> = emptyMap(),
         signature: String = "test_signature",
         keyId: String = "test_key_id"
-    ) = Config(values, signature, keyId)
+    ) = Config(
+        rawBody = values,
+        body = body,
+        signature = signature,
+        keyId = keyId
+    )
 }

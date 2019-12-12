@@ -4,25 +4,25 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.mock
-import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
-import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.internal.StringSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.map
 import org.amshove.kluent.*
 import org.junit.Test
 import java.io.File
-import java.io.IOException
 
 class ConfigCacheSpec : RobolectricBaseSpec() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>().applicationContext
-    private val stubFetcher: ConfigFetcher = mock()
+    private val stubApiClient: ConfigApiClient = mock()
     private val stubPoller: AsyncPoller = mock()
     private val stubVerifier: ConfigVerifier = mock()
 
     @Test
     fun `should be empty by default`() {
-        val cache = ConfigCache(context, stubFetcher, stubVerifier, stubPoller)
+        val cache = ConfigCache(context, stubApiClient, stubVerifier, stubPoller)
 
         cache.getConfig() shouldEqual emptyMap()
     }
@@ -95,11 +95,12 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
             configValues = hashMapOf("foo" to "bar")
         )
 
-        When calling stubFetcher.fetch() doAnswer {
-            throw IOException("Failed.")
+        When calling stubApiClient.fetchConfig(any(), any()) doAnswer {
+            val error = it.arguments[1] as (Exception) -> Unit
+            error(Exception(""))
         }
 
-        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+        val cache = ConfigCache(stubApiClient, createFile(fileName), stubPoller, stubVerifier)
 
         cache["foo"] shouldEqual "bar"
     }
@@ -107,11 +108,15 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     @Test
     fun `should not cache the fetched config when verification fails`() {
         val fileName = "cache.json"
-        When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
-        When calling stubVerifier.verify(any()) itReturns false
-        ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+        When calling stubApiClient.fetchConfig(any(), any()) doAnswer {
+            val success = it.arguments[0] as (Config) -> Unit
+            success(createConfig(hashMapOf("foo" to "bar")))
 
-        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+        }
+        When calling stubVerifier.verify(any()) itReturns false
+        ConfigCache(stubApiClient, createFile(fileName), stubPoller, stubVerifier)
+
+        val cache = ConfigCache(stubApiClient, createFile(fileName), stubPoller, stubVerifier)
 
         cache["foo"] shouldEqual null
     }
@@ -126,7 +131,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
 
         When calling stubVerifier.verify(any()) itReturns false
 
-        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier)
+        val cache = ConfigCache(stubApiClient, createFile(filename), stubPoller, stubVerifier)
 
         cache["foo"] shouldEqual null
     }
@@ -135,22 +140,35 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         configValues: Map<String, String> = hashMapOf("testKey" to "test_value"),
         file: File = createFile("cache.json")
     ): ConfigCache {
-        When calling stubFetcher.fetch() itReturns createConfig(configValues)
+        When calling stubApiClient.fetchConfig(any(), any()) doAnswer {
+            val success = it.arguments[0] as (Config) -> Unit
+            success(createConfig(configValues))
+
+        }
         When calling stubPoller.start(any()) itAnswers {
-            (it.arguments[0] as () -> Unit).invoke()
+            val poll = it.arguments[0] as suspend () -> Unit
+            runBlocking {
+                poll()
+            }
         }
         When calling stubVerifier.verify(any()) itReturns true
 
-        return ConfigCache(stubFetcher, file, stubPoller, stubVerifier)
+        return ConfigCache(stubApiClient, file, stubPoller, stubVerifier)
     }
 
     private fun createConfig(values: Map<String, String>) = Config(
-        Json.stringify(
-            ConfigResponse.serializer(),
-            ConfigResponse(values, "test_key_id")
-        ),
-        "test_signature",
-        "test_key_id"
+        rawBody = """
+            {
+                body:${ Json.stringify(
+                    (StringSerializer to StringSerializer).map,
+                    values
+                ) },
+                keyId:"test_key_id"
+            }
+        """.trimIndent(),
+        body = values,
+        signature = "test_signature",
+        keyId = "test_key_id"
     )
 
     private fun createFile(name: String) = File(context.filesDir, name)

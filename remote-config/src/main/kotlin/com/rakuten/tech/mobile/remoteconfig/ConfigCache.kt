@@ -3,13 +3,15 @@ package com.rakuten.tech.mobile.remoteconfig
 import android.content.Context
 import android.util.Log
 import androidx.annotation.VisibleForTesting
-import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import java.io.File
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 @Suppress("TooGenericExceptionCaught")
 internal class ConfigCache @VisibleForTesting constructor(
-    fetcher: ConfigFetcher,
+    configApi: ConfigApiClient,
     file: File,
     poller: AsyncPoller,
     private val verifier: ConfigVerifier
@@ -17,11 +19,11 @@ internal class ConfigCache @VisibleForTesting constructor(
 
     constructor(
         context: Context,
-        configFetcher: ConfigFetcher,
+        configApi: ConfigApiClient,
         verifier: ConfigVerifier,
         poller: AsyncPoller
     ) : this(
-        configFetcher,
+        configApi,
         File(
             context.noBackupFilesDir,
             "com.rakuten.tech.mobile.remoteconfig.configcache.json"
@@ -44,15 +46,22 @@ internal class ConfigCache @VisibleForTesting constructor(
 
     init {
         poller.start {
-            fetcher.fetch(response = { fetchedConfig ->
-                verifier.ensureFetchedKey(fetchedConfig.keyId)
-
-                if (verifier.verify(fetchedConfig)) {
-                    file.writeText(fetchedConfig.toJsonString())
+            try {
+                val config = suspendCoroutine<Config> { continuation ->
+                    configApi.fetchConfig(
+                        { continuation.resume(it) },
+                        { continuation.resumeWithException(it) }
+                    )
                 }
-            }, error = { exception ->
-                Log.e("RemoteConfig", "Error while fetching config from server", exception)
-            })
+
+                verifier.ensureFetchedKey(config.keyId)
+
+                if (verifier.verify(config)) {
+                    file.writeText(config.toJsonString())
+                }
+            } catch (error: Exception) {
+                Log.e("RemoteConfig", "Error while fetching config from server", error)
+            }
         }
     }
 
@@ -64,7 +73,7 @@ internal class ConfigCache @VisibleForTesting constructor(
         val config = Config.fromJsonString(fileText)
 
         if (verifier.verify(config)) {
-            ConfigResponse.fromJsonString(config.rawBody).body
+            config.body
         } else {
             null
         }

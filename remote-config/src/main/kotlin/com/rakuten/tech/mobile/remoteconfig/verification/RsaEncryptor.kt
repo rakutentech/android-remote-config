@@ -1,3 +1,5 @@
+
+
 package com.rakuten.tech.mobile.remoteconfig.verification
 
 import android.content.Context
@@ -69,6 +71,7 @@ internal class RsaEncryptor @VisibleForTesting constructor(
     }
 }
 
+@Suppress("DEPRECATION")
 internal class RsaKeyGenerator(
     private val alias: String
 ) {

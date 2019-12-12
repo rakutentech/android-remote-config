@@ -29,7 +29,7 @@ internal class ConfigVerifier @VisibleForTesting constructor(
         }
     }
 
-    fun ensureFetchedKey(keyId: String) = cache[keyId] ?: cache.fetch(keyId)
+    suspend fun ensureFetchedKey(keyId: String) = cache[keyId] ?: cache.fetch(keyId)
 }
 
 internal class InvalidSignatureException : Exception("Signature was invalid.")
