@@ -12,7 +12,7 @@ jobs:
       JVM_OPTS: "-Xmx3200m"
     steps:
     - checkout
-    - run: git submodule update --init
+    - run: git submodule update --init --recursive
     - restore_cache:
         key: *gradle_cache_key
     - run:
