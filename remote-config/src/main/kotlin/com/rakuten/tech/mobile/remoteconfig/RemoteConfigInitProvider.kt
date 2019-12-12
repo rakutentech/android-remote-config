@@ -2,14 +2,11 @@ package com.rakuten.tech.mobile.remoteconfig
 
 import android.content.ContentProvider
 import android.content.ContentValues
-import android.content.Context.MODE_PRIVATE
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import com.rakuten.tech.mobile.manifestconfig.annotations.ManifestConfig
 import com.rakuten.tech.mobile.manifestconfig.annotations.MetaData
-import com.rakuten.tech.mobile.remoteconfig.api.ConfigApiClient
-import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
-import com.rakuten.tech.mobile.remoteconfig.api.PublicKeyFetcher
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import com.rakuten.tech.mobile.remoteconfig.verification.PublicKeyCache
 
@@ -59,30 +56,30 @@ class RemoteConfigInitProvider : ContentProvider() {
 
         val manifestConfig = AppManifestConfig(context)
 
-        val client = ConfigApiClient(
+        val apiClient = ConfigApiClient(
+            platformClient = createHttpClient(context.cacheDir),
             baseUrl = manifestConfig.baseUrl(),
             appId = manifestConfig.appId(),
             subscriptionKey = manifestConfig.subscriptionKey(),
-            context = context
+            deviceModel = Build.MODEL,
+            osVersion = Build.VERSION.RELEASE,
+            appName = context.packageName,
+            appVersion = context.packageManager
+                .getPackageInfo(context.packageName, 0).versionName,
+            sdkVersion = BuildConfig.VERSION_NAME
         )
         val verifier = ConfigVerifier(
             PublicKeyCache(
-                keyFetcher = PublicKeyFetcher(client),
+                apiClient = apiClient,
                 context = context
             )
         )
-        val configFetcher = ConfigFetcher(
-            baseUrl = manifestConfig.baseUrl(),
-            appId = manifestConfig.appId(),
-            subscriptionKey = manifestConfig.subscriptionKey()
-        )
         val cache = ConfigCache(
             context = context,
-            configFetcher = configFetcher,
+            configApi = apiClient,
             verifier = verifier,
             poller = AsyncPoller(manifestConfig.pollingDelay())
         )
-
         RemoteConfig.init(cache)
 
         return true
