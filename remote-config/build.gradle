@@ -50,9 +50,9 @@ publishing {
 
 def isSnapshot = project.version.contains('-')
 if (isSnapshot) {
-  apply from: '../gradle/artifactory.gradle'
+  apply from: '../config/publish/artifactory.gradle'
 } else {
-  apply from: '../gradle/bintray.gradle'
+  apply from: '../config/publish/bintray.gradle'
 }
 
 apply from: "../config/quality/jacoco/android.gradle"
