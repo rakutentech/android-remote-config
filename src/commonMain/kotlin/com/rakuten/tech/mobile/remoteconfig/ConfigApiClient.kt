@@ -13,7 +13,7 @@ internal expect val ApplicationDispatcher: CoroutineDispatcher
 /**
  * API Client used for fetching config and public key.
  */
-class ConfigApiClient(
+open class ConfigApiClient(
     platformClient: HttpClient,
     baseUrl: String,
     private val appId: String,
@@ -45,7 +45,7 @@ class ConfigApiClient(
      * @param error callback when request fails
      * @returns Config response
      */
-    fun fetchConfig(
+    open fun fetchConfig(
         success: (Config) -> Unit,
         error: (Exception) -> Unit
     ) = fetchConfig(
@@ -81,7 +81,7 @@ class ConfigApiClient(
      * @param error callback when request fails
      * @returns public key
      */
-    fun fetchPublicKey(
+    open fun fetchPublicKey(
         keyId: String,
         success: (String) -> Unit,
         error: (Exception) -> Unit
