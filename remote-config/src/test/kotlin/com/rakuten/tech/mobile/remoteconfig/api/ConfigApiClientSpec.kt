@@ -2,12 +2,12 @@ package com.rakuten.tech.mobile.remoteconfig.api
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
+import com.rakuten.tech.mobile.sdkutils.RasSdkHeaders
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import org.amshove.kluent.shouldContain
-import org.amshove.kluent.shouldEqual
-import org.amshove.kluent.shouldStartWith
+import org.amshove.kluent.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -15,7 +15,9 @@ import java.util.logging.Level
 import java.util.logging.LogManager
 
 class ConfigApiClientSpec : RobolectricBaseSpec() {
+
     private val server = MockWebServer()
+    private val mockRasHeaders: RasSdkHeaders = mock()
     private lateinit var baseUrl: String
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
@@ -29,6 +31,8 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
     fun setup() {
         server.start()
         baseUrl = server.url("client").toString()
+
+        When calling mockRasHeaders.asArray() itReturns emptyArray()
     }
 
     @After
@@ -62,6 +66,18 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         client.fetchPath("test/path/to/fetch")
 
         server.takeRequest().requestUrl.toString() shouldContain "/test/path/to/fetch"
+    }
+
+    @Test
+    fun `should attach the RAS headers to requests`() {
+        enqueueResponse()
+        When calling mockRasHeaders.asArray() itReturns
+            arrayOf("ras_header_name" to "ras_header_value")
+
+        createClient(headers = mockRasHeaders)
+            .fetchPath("/")
+
+        server.takeRequest().getHeader("ras_header_name") shouldEqual "ras_header_value"
     }
 
     @Test
@@ -116,12 +132,10 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
 
     private fun createClient(
         url: String = baseUrl,
-        appId: String = "test_app_id",
-        subscriptionKey: String = "test_subscription_key"
+        headers: RasSdkHeaders = mockRasHeaders
     ) = ConfigApiClient(
         baseUrl = url,
-        appId = appId,
-        subscriptionKey = subscriptionKey,
-        context = context
+        context = context,
+        headers = headers
     )
 }

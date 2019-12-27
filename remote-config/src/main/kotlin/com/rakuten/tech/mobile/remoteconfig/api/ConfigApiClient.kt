@@ -1,6 +1,10 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
+import com.rakuten.tech.mobile.sdkutils.BuildConfig
+import com.rakuten.tech.mobile.sdkutils.RasSdkHeaders
+import com.rakuten.tech.mobile.sdkutils.okhttp.addHeaderInterceptor
 import okhttp3.Cache
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
@@ -8,24 +12,34 @@ import okhttp3.Request
 import okhttp3.Response
 import java.lang.IllegalArgumentException
 
-internal class ConfigApiClient(
+internal class ConfigApiClient @VisibleForTesting constructor(
     baseUrl: String,
-    appId: String,
-    subscriptionKey: String,
-    context: Context
+    context: Context,
+    headers: RasSdkHeaders
 ) {
 
+    constructor(
+        baseUrl: String,
+        appId: String,
+        subscriptionKey: String,
+        context: Context
+    ) : this (
+        baseUrl = baseUrl,
+        context = context,
+        headers = RasSdkHeaders(
+            appId = appId,
+            subscriptionKey = subscriptionKey,
+            sdkName = "Remote Config",
+            sdkVersion = BuildConfig.VERSION_NAME
+        )
+    )
+
+    @Suppress("SpreadOperator")
     private val client = OkHttpClient.Builder()
         .cache(Cache(context.cacheDir,
             CACHE_SIZE
         ))
-        .addNetworkInterceptor(
-            HeadersInterceptor(
-                appId = appId,
-                subscriptionKey = subscriptionKey,
-                context = context
-            )
-        )
+        .addHeaderInterceptor(*headers.asArray())
         .build()
     private val requestUrl = try {
         HttpUrl.get(baseUrl)
