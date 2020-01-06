@@ -1,77 +1,60 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
+import com.nhaarman.mockitokotlin2.argForWhich
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import junit.framework.TestCase
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import okhttp3.*
 import org.amshove.kluent.*
-import org.junit.After
-import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 import java.io.IOException
-import java.util.logging.Level
-import java.util.logging.LogManager
 
 @Ignore
 open class PublicKeyFetcherSpec : RobolectricBaseSpec() {
-    val server = MockWebServer()
-    lateinit var baseUrl: String
+    internal val mockApiClient: ConfigApiClient = mock()
 
-    private val context = ApplicationProvider.getApplicationContext<Context>()
+    internal fun createFetcher() =
+        PublicKeyFetcher(mockApiClient)
 
-    init {
-        LogManager.getLogManager()
-            .getLogger(MockWebServer::class.java.name).level = Level.OFF
-    }
-
-    @Before
-    fun setup() {
-        server.start()
-        baseUrl = server.url("config").toString()
-    }
-
-    @After
-    fun teardown() {
-        server.shutdown()
-    }
-
-    internal fun createFetcher(url: String = baseUrl) =
-        PublicKeyFetcher(
-            ConfigApiClient(
-                baseUrl = url,
-                appId = "test_app_id",
-                subscriptionKey = "test_subscription_key",
-                context = context
-            )
-        )
 
     internal fun enqueueResponse(
+        body: String,
+        code: Int
+    ) {
+        When calling mockApiClient.fetchPath(any()) itReturns Response.Builder()
+            .request(Request.Builder().url("https://www.example.com").build())
+            .protocol(Protocol.HTTP_2)
+            .message("")
+            .code(code)
+            .body(ResponseBody.create(MediaType.get("text/plain; charset=utf-8"), body))
+            .build()
+    }
+
+}
+
+class PublicKeyFetcherNormalSpec : PublicKeyFetcherSpec() {
+
+    private fun enqueueSuccessResponse(
         id: String = "test_id",
         key: String = "test_key",
         createdAt: String = "2019-07-23T07:24:57+00:00"
     ) {
-        server.enqueue(
-            MockResponse()
-                .setBody("""
+        enqueueResponse(
+            body = """
                 {
                     "id": "$id",
                     "key": "$key",
                     "createdAt": "$createdAt"
                 }
-            """.trimIndent())
+            """.trimIndent(),
+            code = 200
         )
     }
-}
-
-class PublicKeyFetcherNormalSpec : PublicKeyFetcherSpec() {
 
     @Test
     fun `should fetch the public key`() {
         val fetcher = createFetcher()
-        enqueueResponse(key = "test_key")
+        enqueueSuccessResponse(key = "test_key")
 
         fetcher.fetch("test_key_id") shouldEqual "test_key"
     }
@@ -79,59 +62,72 @@ class PublicKeyFetcherNormalSpec : PublicKeyFetcherSpec() {
     @Test
     fun `should fetch the public key for the provided key id`() {
         val fetcher = createFetcher()
-        enqueueResponse(id = "test_key_id")
+        enqueueSuccessResponse(id = "test_key_id")
 
         fetcher.fetch("test_key_id")
 
-        server.takeRequest().path shouldContain "/keys/test_key_id"
+        Verify on mockApiClient that mockApiClient.fetchPath(argForWhich {
+            contains("keys/test_key_id")
+        })
     }
 }
 
 class PublicKeyFetcherErrorSpec : PublicKeyFetcherSpec() {
 
+    private fun enqueueErrorResponse(
+        body: String = "",
+        code: Int = 200
+    ) {
+        enqueueResponse(
+            body = body,
+            code = code
+        )
+    }
+
     @Test(expected = IOException::class)
     fun `should throw when the request is unsuccessful`() {
+        enqueueErrorResponse(code = 400)
+
         val fetcher = createFetcher()
-        server.enqueue(MockResponse().setResponseCode(400))
 
         fetcher.fetch("test_key_id")
     }
 
     @Test(expected = Exception::class)
     fun `should throw when the 'id' key is missing in response`() {
-        val fetcher = createFetcher()
-        server.enqueue(
-            MockResponse().setBody("""{
-                    "key": "test_key",
-                    "createdAt": "test_created"
-                }""".trimIndent())
+        enqueueErrorResponse(
+            body = """{
+                "key": "test_key",
+                "createdAt": "test_created"
+            }""".trimIndent()
         )
+        val fetcher = createFetcher()
 
         fetcher.fetch("test_key_id")
     }
 
     @Test(expected = Exception::class)
     fun `should throw when the 'key' key is missing in response`() {
-        val fetcher = createFetcher()
-        server.enqueue(
-            MockResponse().setBody("""{
-                    "id": "test_key_id",
-                    "createdAt": "test_created"
-                }""".trimIndent())
+        enqueueErrorResponse(
+            body = """{
+                "id": "test_key_id",
+                "createdAt": "test_created"
+            }""".trimIndent()
         )
+        val fetcher = createFetcher()
 
         fetcher.fetch("test_key_id")
     }
 
     @Test(expected = Exception::class)
     fun `should throw when the 'createdAt' key is missing in response`() {
-        val fetcher = createFetcher()
-        server.enqueue(
-            MockResponse().setBody("""{
-                    "id": "test_key_id",
-                    "key": "test_key"
-                }""".trimIndent())
+        enqueueErrorResponse(
+            body = """{
+                "id": "test_key_id",
+                "key": "test_key"
+            }""".trimIndent()
         )
+        val fetcher = createFetcher()
 
         fetcher.fetch("test_key_id")
     }
@@ -139,15 +135,15 @@ class PublicKeyFetcherErrorSpec : PublicKeyFetcherSpec() {
     @Test
     @Suppress("TooGenericExceptionCaught")
     fun `should not throw when there are extra keys in the response`() {
-        val fetcher = createFetcher()
-        server.enqueue(
-            MockResponse().setBody("""{
-                    "id": "test_id",
-                    "key": "test_key",
-                    "createdAt": "test_created",
-                    "randomKey": "random_value"
-                }""".trimIndent())
+        enqueueErrorResponse(
+            body = """{
+                "id": "test_id",
+                "key": "test_key",
+                "createdAt": "test_created",
+                "randomKey": "random_value"
+            }""".trimIndent()
         )
+        val fetcher = createFetcher()
 
         try {
             fetcher.fetch("test_key_id")
