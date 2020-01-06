@@ -16,7 +16,6 @@ open class PublicKeyFetcherSpec : RobolectricBaseSpec() {
     internal fun createFetcher() =
         PublicKeyFetcher(mockApiClient)
 
-
     internal fun enqueueResponse(
         body: String,
         code: Int
@@ -29,7 +28,6 @@ open class PublicKeyFetcherSpec : RobolectricBaseSpec() {
             .body(ResponseBody.create(MediaType.get("text/plain; charset=utf-8"), body))
             .build()
     }
-
 }
 
 class PublicKeyFetcherNormalSpec : PublicKeyFetcherSpec() {
