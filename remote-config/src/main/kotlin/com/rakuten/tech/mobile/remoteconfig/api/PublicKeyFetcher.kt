@@ -1,7 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import com.rakuten.tech.mobile.remoteconfig.jsonAdapter
+import com.squareup.moshi.JsonClass
 import java.io.IOException
 
 internal class PublicKeyFetcher(private val client: ConfigApiClient) {
@@ -15,20 +15,17 @@ internal class PublicKeyFetcher(private val client: ConfigApiClient) {
 
         val body = response.body()!!.string() // Body is never null if request is successful
 
-        return PublicKeyResponse.fromJsonString(
-            body
-        ).key
+        return PublicKeyResponse.fromJsonString(body).key
     }
 }
 
-@Serializable
-private data class PublicKeyResponse(
+@JsonClass(generateAdapter = true)
+internal data class PublicKeyResponse(
     val id: String,
     val key: String,
     val createdAt: String
 ) {
-
     companion object {
-        fun fromJsonString(body: String) = Json.nonstrict.parse(serializer(), body)
+        fun fromJsonString(body: String) = jsonAdapter<PublicKeyResponse>().fromJson(body)!!
     }
 }

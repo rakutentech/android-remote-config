@@ -1,19 +1,14 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
 import com.nhaarman.mockitokotlin2.argForWhich
-import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
+import com.rakuten.tech.mobile.remoteconfig.jsonMapAdapter
 import junit.framework.TestCase
-import kotlinx.serialization.internal.StringSerializer
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.map
 import okhttp3.*
 import org.amshove.kluent.*
-import org.junit.Ignore
 import org.junit.Test
 import java.io.IOException
 
-@Ignore
-open class ConfigFetcherSpec : RobolectricBaseSpec() {
+open class ConfigFetcherSpec {
 
     internal val mockApiClient: ConfigApiClient = mock()
 
@@ -21,10 +16,7 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
         body: Map<String, String> = hashMapOf("foo" to "bar"),
         keyId: String = "key_id_value"
     ): String {
-        val bodyValue = Json.nonstrict.stringify(
-            (StringSerializer to StringSerializer).map,
-            body
-        )
+        val bodyValue = jsonMapAdapter<String, String>().toJson(body)!!
 
         return """{"body":$bodyValue,"keyId":"$keyId"}"""
     }
@@ -45,8 +37,7 @@ open class ConfigFetcherSpec : RobolectricBaseSpec() {
     }
 
     internal fun createFetcher(
-        appId: String = "test_app_id",
-        subscriptionKey: String = "test_subscription_key"
+        appId: String = "test_app_id"
     ) = ConfigFetcher(
         appId = appId,
         client = mockApiClient

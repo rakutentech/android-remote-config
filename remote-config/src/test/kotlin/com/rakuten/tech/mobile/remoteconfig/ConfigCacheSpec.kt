@@ -7,7 +7,6 @@ import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
-import kotlinx.serialization.json.Json
 import org.amshove.kluent.*
 import org.junit.Test
 import java.io.File
@@ -144,14 +143,16 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         return ConfigCache(stubFetcher, file, stubPoller, stubVerifier)
     }
 
-    private fun createConfig(values: Map<String, String>) = Config(
-        Json.stringify(
-            ConfigResponse.serializer(),
-            ConfigResponse(values, "test_key_id")
-        ),
-        "test_signature",
-        "test_key_id"
-    )
+    private fun createConfig(values: Map<String, String>): Config {
+        val body = jsonAdapter<ConfigResponse>()
+            .toJson(ConfigResponse(values, "test_key_id"))
+
+        return Config(
+            rawBody = body,
+            signature = "test_signature",
+            keyId = "test_key_id"
+        )
+    }
 
     private fun createFile(name: String) = File(context.filesDir, name)
 }

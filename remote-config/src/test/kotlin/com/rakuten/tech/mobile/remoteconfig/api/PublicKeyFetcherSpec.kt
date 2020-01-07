@@ -1,16 +1,13 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
 import com.nhaarman.mockitokotlin2.argForWhich
-import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import junit.framework.TestCase
 import okhttp3.*
 import org.amshove.kluent.*
-import org.junit.Ignore
 import org.junit.Test
 import java.io.IOException
 
-@Ignore
-open class PublicKeyFetcherSpec : RobolectricBaseSpec() {
+open class PublicKeyFetcherSpec {
     internal val mockApiClient: ConfigApiClient = mock()
 
     internal fun createFetcher() =

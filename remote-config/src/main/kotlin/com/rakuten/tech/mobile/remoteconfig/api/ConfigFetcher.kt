@@ -1,8 +1,8 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
 import com.rakuten.tech.mobile.remoteconfig.Config
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import com.rakuten.tech.mobile.remoteconfig.jsonAdapter
+import com.squareup.moshi.JsonClass
 
 import java.io.IOException
 
@@ -20,20 +20,20 @@ internal class ConfigFetcher constructor(
 
         val body = response.body()!!.string()
             .trim() // OkHttp sometimes adds an extra newline character when caching the response
-        val (_body, keyId) = ConfigResponse.fromJsonString(body)
+
+        val (_body, keyId) = ConfigResponse.fromJsonString(body)!!
         val signature = response.header("Signature") ?: ""
 
         return Config(body, signature, keyId)
     }
 }
 
-@Serializable
+@JsonClass(generateAdapter = true)
 internal data class ConfigResponse(
     val body: Map<String, String>,
     val keyId: String
 ) {
-
     companion object {
-        fun fromJsonString(body: String) = Json.nonstrict.parse(serializer(), body)
+        fun fromJsonString(body: String) = jsonAdapter<ConfigResponse>().fromJson(body)!!
     }
 }

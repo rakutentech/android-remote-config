@@ -4,14 +4,11 @@ import android.content.Context
 import android.os.Build
 import androidx.annotation.VisibleForTesting
 import com.rakuten.tech.mobile.remoteconfig.api.PublicKeyFetcher
-import kotlinx.serialization.internal.StringSerializer
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.map
+import com.rakuten.tech.mobile.remoteconfig.jsonMapAdapter
 import java.io.File
 
 internal class PublicKeyCache @VisibleForTesting constructor(
     private val keyFetcher: PublicKeyFetcher,
-    context: Context,
     private val file: File,
     private val encryptor: Encryptor
 ) {
@@ -21,7 +18,6 @@ internal class PublicKeyCache @VisibleForTesting constructor(
         context: Context
     ) : this(
         keyFetcher,
-        context,
         File(
             context.noBackupFilesDir,
             "com.rakuten.tech.mobile.remoteconfig.publickeys.json"
@@ -36,7 +32,8 @@ internal class PublicKeyCache @VisibleForTesting constructor(
         val text = file.readText()
 
         if (text.isNotBlank()) {
-            parseJson(text).toMutableMap()
+            jsonMapAdapter<String, String>()
+                .fromJson(text)!!.toMutableMap()
         } else {
             mutableMapOf()
         }
@@ -69,13 +66,5 @@ internal class PublicKeyCache @VisibleForTesting constructor(
         return key
     }
 
-    private fun parseJson(json: String) = Json.nonstrict.parse(
-        (StringSerializer to StringSerializer).map,
-        json
-    )
-
-    private fun Map<String, String>.toJsonString() = Json.nonstrict.stringify(
-        (StringSerializer to StringSerializer).map,
-        this
-    )
+    private fun Map<String, String>.toJsonString() = jsonMapAdapter<String, String>().toJson(this)
 }

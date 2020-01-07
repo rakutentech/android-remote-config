@@ -6,8 +6,7 @@ import androidx.annotation.VisibleForTesting
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import com.squareup.moshi.JsonClass
 import java.io.File
 
 @Suppress("TooGenericExceptionCaught")
@@ -79,16 +78,16 @@ internal class ConfigCache @VisibleForTesting constructor(
     }
 }
 
-@Serializable
+@JsonClass(generateAdapter = true)
 internal data class Config(
     val rawBody: String,
     val signature: String,
     val keyId: String
 ) {
 
-    fun toJsonString() = Json.stringify(serializer(), this)
+    fun toJsonString() = jsonAdapter<Config>().toJson(this)!!
 
     companion object {
-        fun fromJsonString(body: String) = Json.nonstrict.parse(serializer(), body)
+        fun fromJsonString(body: String) = jsonAdapter<Config>().fromJson(body)!!
     }
 }
