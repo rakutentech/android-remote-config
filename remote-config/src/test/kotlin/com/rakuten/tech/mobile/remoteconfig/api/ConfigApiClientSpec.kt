@@ -1,9 +1,6 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.mock
-import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import com.rakuten.tech.mobile.sdkutils.RasSdkHeaders
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -14,13 +11,11 @@ import org.junit.Test
 import java.util.logging.Level
 import java.util.logging.LogManager
 
-class ConfigApiClientSpec : RobolectricBaseSpec() {
+class ConfigApiClientSpec {
 
     private val server = MockWebServer()
     private val mockRasHeaders: RasSdkHeaders = mock()
     private lateinit var baseUrl: String
-
-    private val context = ApplicationProvider.getApplicationContext<Context>()
 
     init {
         LogManager.getLogManager()
@@ -135,7 +130,7 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         headers: RasSdkHeaders = mockRasHeaders
     ) = ConfigApiClient(
         baseUrl = url,
-        context = context,
+        context = mock(),
         headers = headers
     )
 }

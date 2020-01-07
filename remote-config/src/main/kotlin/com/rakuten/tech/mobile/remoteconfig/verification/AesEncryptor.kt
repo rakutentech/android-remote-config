@@ -9,8 +9,8 @@ import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
+import com.rakuten.tech.mobile.remoteconfig.jsonAdapter
+import com.squareup.moshi.JsonClass
 import java.security.KeyStore
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -99,15 +99,15 @@ internal class AesKeyGenerator(
     }
 }
 
-@Serializable
-private data class AesEncryptedData(
+@JsonClass(generateAdapter = true)
+internal data class AesEncryptedData(
     val iv: String,
     val encryptedData: String
 ) {
 
-    fun toJsonString() = Json.stringify(serializer(), this)
+    fun toJsonString() = jsonAdapter<AesEncryptedData>().toJson(this)!!
 
     companion object {
-        fun fromJsonString(body: String) = Json.nonstrict.parse(serializer(), body)
+        fun fromJsonString(body: String) = jsonAdapter<AesEncryptedData>().fromJson(body)!!
     }
 }

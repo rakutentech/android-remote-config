@@ -104,5 +104,5 @@ class PublicKeyCacheSpec : RobolectricBaseSpec() {
         context: Context = ApplicationProvider.getApplicationContext(),
         file: File = File(context.cacheDir, "keys.json"),
         encryptor: Encryptor = stubEncryptor
-    ) = PublicKeyCache(fetcher, context, file, encryptor)
+    ) = PublicKeyCache(fetcher, file, encryptor)
 }
