@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest
-  package="com.rakuten.tech.mobile.remoteconfig"
-  xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest package="com.rakuten.tech.mobile.remoteconfig"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -11,5 +11,13 @@
       android:authorities="${applicationId}.RemoteConfigInitProvider"
       android:exported="false"
       android:initOrder="99" />
+
+    <!-- SDK Utils must be intiailzed before Remote Config -->
+    <provider
+      tools:replace="android:initOrder"
+      android:name="com.rakuten.tech.mobile.sdkutils.SdkUtilsInitProvider"
+      android:authorities="${applicationId}.SdkUtilsInitProvider"
+      android:exported="false"
+      android:initOrder="100" />
   </application>
 </manifest>
