@@ -3,7 +3,6 @@ package com.rakuten.tech.mobile.remoteconfig.api
 import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.argForWhich
 import com.nhaarman.mockitokotlin2.eq
-import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import com.rakuten.tech.mobile.sdkutils.RasSdkHeaders
 import junit.framework.TestCase
 import okhttp3.*
