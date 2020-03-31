@@ -1,6 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
 import com.nhaarman.mockitokotlin2.argForWhich
+import com.nhaarman.mockitokotlin2.eq
 import com.rakuten.tech.mobile.remoteconfig.jsonMapAdapter
 import junit.framework.TestCase
 import okhttp3.*
@@ -26,7 +27,7 @@ open class ConfigFetcherSpec {
         signature: String,
         code: Int
     ) {
-        When calling mockApiClient.fetchPath(any()) itReturns Response.Builder()
+        When calling mockApiClient.fetchPath(any(), eq(true)) itReturns Response.Builder()
             .request(Request.Builder().url("https://www.example.com").build())
             .protocol(Protocol.HTTP_2)
             .message("")
@@ -111,7 +112,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
 
         Verify on mockApiClient that mockApiClient.fetchPath(argForWhich {
             contains("app/test-app-id")
-        })
+        }, eq(true))
     }
 
     @Test
@@ -123,7 +124,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
 
         Verify on mockApiClient that mockApiClient.fetchPath(argForWhich {
             endsWith("/config")
-        })
+        }, eq(true))
     }
 }
 

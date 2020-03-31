@@ -1,6 +1,8 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
+import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.mock
+import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
 import com.rakuten.tech.mobile.sdkutils.RasSdkHeaders
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -11,7 +13,7 @@ import org.junit.Test
 import java.util.logging.Level
 import java.util.logging.LogManager
 
-class ConfigApiClientSpec {
+class ConfigApiClientSpec : RobolectricBaseSpec() {
 
     private val server = MockWebServer()
     private val mockRasHeaders: RasSdkHeaders = mock()
@@ -40,7 +42,7 @@ class ConfigApiClientSpec {
         val client = createClient()
         enqueueResponse("test_body")
 
-        client.fetchPath("test-path").body()!!.string() shouldEqual "test_body"
+        client.fetchPath("test-path", true).body()!!.string() shouldEqual "test_body"
     }
 
     @Test
@@ -48,7 +50,7 @@ class ConfigApiClientSpec {
         val client = createClient()
         enqueueResponse()
 
-        client.fetchPath("test-path")
+        client.fetchPath("test-path", true)
 
         server.takeRequest().requestUrl.toString() shouldStartWith baseUrl
     }
@@ -58,7 +60,7 @@ class ConfigApiClientSpec {
         val client = createClient()
         enqueueResponse()
 
-        client.fetchPath("test/path/to/fetch")
+        client.fetchPath("test/path/to/fetch", true)
 
         server.takeRequest().requestUrl.toString() shouldContain "/test/path/to/fetch"
     }
@@ -70,7 +72,7 @@ class ConfigApiClientSpec {
             arrayOf("ras_header_name" to "ras_header_value")
 
         createClient(headers = mockRasHeaders)
-            .fetchPath("/")
+            .fetchPath("/", true)
 
         server.takeRequest().getHeader("ras_header_name") shouldEqual "ras_header_value"
     }
@@ -81,9 +83,9 @@ class ConfigApiClientSpec {
         enqueueResponse(etag = "etag_value")
         enqueueResponse()
 
-        client.fetchPath("test-path").body()!!.string()
+        client.fetchPath("test-path", true).body()!!.string()
         server.takeRequest()
-        client.fetchPath("test-path").body()!!.string()
+        client.fetchPath("test-path", true).body()!!.string()
 
         server.takeRequest().headers.get("If-None-Match") shouldEqual "etag_value"
     }
@@ -94,9 +96,9 @@ class ConfigApiClientSpec {
         enqueueResponse("test-body")
         server.enqueue(MockResponse().setResponseCode(304))
 
-        client.fetchPath("test-path").body()!!.string()
+        client.fetchPath("test-path", true).body()!!.string()
 
-        client.fetchPath("test-path").body()!!.string() shouldEqual "test-body"
+        client.fetchPath("test-path", true).body()!!.string() shouldEqual "test-body"
     }
 
     @Test
@@ -104,9 +106,9 @@ class ConfigApiClientSpec {
         enqueueResponse("test-body")
         server.enqueue(MockResponse().setResponseCode(304))
 
-        createClient().fetchPath("test-path").body()!!.string()
+        createClient().fetchPath("test-path", true).body()!!.string()
 
-        createClient().fetchPath("test-path").body()!!.string() shouldEqual "test-body"
+        createClient().fetchPath("test-path", true).body()!!.string() shouldEqual "test-body"
     }
 
     @Test(expected = Exception::class)
@@ -130,7 +132,7 @@ class ConfigApiClientSpec {
         headers: RasSdkHeaders = mockRasHeaders
     ) = ConfigApiClient(
         baseUrl = url,
-        context = mock(),
+        context = ApplicationProvider.getApplicationContext(),
         headers = headers
     )
 }
