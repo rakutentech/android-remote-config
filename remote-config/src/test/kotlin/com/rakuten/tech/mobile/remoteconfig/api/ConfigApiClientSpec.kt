@@ -1,5 +1,9 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
+import android.content.Context
+import android.content.res.Configuration
+import android.content.res.Resources
+import android.os.LocaleList
 import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
@@ -10,6 +14,7 @@ import org.amshove.kluent.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.util.*
 import java.util.logging.Level
 import java.util.logging.LogManager
 
@@ -109,6 +114,42 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         createClient().fetchPath("test-path", true).body()!!.string()
 
         createClient().fetchPath("test-path", true).body()!!.string() shouldEqual "test-body"
+    }
+
+    @Test
+    fun `should not add app version in request`() {
+        val validContext: Context = ApplicationProvider.getApplicationContext()
+        val context: Context = mock()
+        When calling context.packageManager itReturns validContext.packageManager
+        When calling context.packageName itReturns "invalid.package"
+        When calling context.resources itReturns validContext.resources
+        val client = ConfigApiClient(baseUrl, context, mockRasHeaders)
+
+        enqueueResponse("test-body")
+        server.enqueue(MockResponse().setResponseCode(304))
+        val response = client.fetchPath("test-path", true)
+
+        response.request().url().queryParameter("appVersion").shouldBeNull()
+    }
+
+    @Test
+    fun `should not add country in request`() {
+        val validContext: Context = ApplicationProvider.getApplicationContext()
+        val context: Context = mock()
+        val resource: Resources = mock()
+        val config: Configuration = mock()
+        When calling context.packageManager itReturns validContext.packageManager
+        When calling context.packageName itReturns validContext.packageName
+        When calling context.resources itReturns resource
+        When calling resource.configuration itReturns config
+        When calling config.locales itReturns LocaleList(Locale("invalid", "invalid"))
+        val client = ConfigApiClient(baseUrl, context, mockRasHeaders)
+
+        enqueueResponse("test-body")
+        server.enqueue(MockResponse().setResponseCode(304))
+        val response = client.fetchPath("test-path", true)
+
+        response.request().url().queryParameter("country").shouldBeNull()
     }
 
     @Test(expected = Exception::class)

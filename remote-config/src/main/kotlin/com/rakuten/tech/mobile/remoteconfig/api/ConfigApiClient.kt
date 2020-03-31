@@ -14,6 +14,7 @@ import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import java.lang.IllegalArgumentException
 import java.util.MissingResourceException
 import java.util.Locale
 
@@ -29,13 +30,13 @@ internal class ConfigApiClient @VisibleForTesting constructor(
         subscriptionKey: String,
         context: Context
     ) : this(
-            baseUrl = baseUrl,
-            context = context,
-            headers = RasSdkHeaders(
-                    appId = appId,
-                    subscriptionKey = subscriptionKey,
-                    sdkName = "Remote Config",
-                    sdkVersion = BuildConfig.VERSION_NAME
+        baseUrl = baseUrl,
+        context = context,
+        headers = RasSdkHeaders(
+            appId = appId,
+            subscriptionKey = subscriptionKey,
+            sdkName = "Remote Config",
+            sdkVersion = BuildConfig.VERSION_NAME
             )
     )
 
@@ -64,8 +65,9 @@ internal class ConfigApiClient @VisibleForTesting constructor(
             }
 
             builder.addQueryParameter(PARAM_KEY_OS_VERSION, Build.VERSION.SDK_INT.toString())
+
             val (language, country) = getLanguageDetails()
-            if (language.isNotEmpty()) builder.addQueryParameter(PARAM_KEY_LANGUAGE, language)
+            builder.addQueryParameter(PARAM_KEY_LANGUAGE, language)
             if (country.isNotEmpty()) builder.addQueryParameter(PARAM_KEY_COUNTRY, country)
         }
 
