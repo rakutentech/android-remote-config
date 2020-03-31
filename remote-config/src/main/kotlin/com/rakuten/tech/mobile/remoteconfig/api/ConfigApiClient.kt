@@ -15,6 +15,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.util.MissingResourceException
+import java.util.Locale
 
 internal class ConfigApiClient @VisibleForTesting constructor(
     baseUrl: String,
