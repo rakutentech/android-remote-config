@@ -1,9 +1,6 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
 import android.content.Context
-import android.content.res.Configuration
-import android.content.res.Resources
-import android.os.LocaleList
 import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.RobolectricBaseSpec
@@ -14,7 +11,6 @@ import org.amshove.kluent.*
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import java.util.*
 import java.util.logging.Level
 import java.util.logging.LogManager
 
@@ -22,6 +18,7 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
 
     private val server = MockWebServer()
     private val mockRasHeaders: RasSdkHeaders = mock()
+    private val mockContext: Context = mock()
     private lateinit var baseUrl: String
 
     init {
@@ -47,7 +44,7 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         val client = createClient()
         enqueueResponse("test_body")
 
-        client.fetchPath("test-path", true).body()!!.string() shouldEqual "test_body"
+        client.fetchPath("test-path", null).body()!!.string() shouldEqual "test_body"
     }
 
     @Test
@@ -55,7 +52,7 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         val client = createClient()
         enqueueResponse()
 
-        client.fetchPath("test-path", true)
+        client.fetchPath("test-path", null)
 
         server.takeRequest().requestUrl.toString() shouldStartWith baseUrl
     }
@@ -65,7 +62,7 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         val client = createClient()
         enqueueResponse()
 
-        client.fetchPath("test/path/to/fetch", true)
+        client.fetchPath("test/path/to/fetch", null)
 
         server.takeRequest().requestUrl.toString() shouldContain "/test/path/to/fetch"
     }
@@ -73,11 +70,9 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
     @Test
     fun `should attach the RAS headers to requests`() {
         enqueueResponse()
-        When calling mockRasHeaders.asArray() itReturns
-            arrayOf("ras_header_name" to "ras_header_value")
+        When calling mockRasHeaders.asArray() itReturns arrayOf("ras_header_name" to "ras_header_value")
 
-        createClient(headers = mockRasHeaders)
-            .fetchPath("/", true)
+        createClient(headers = mockRasHeaders).fetchPath("/", null)
 
         server.takeRequest().getHeader("ras_header_name") shouldEqual "ras_header_value"
     }
@@ -88,9 +83,9 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         enqueueResponse(etag = "etag_value")
         enqueueResponse()
 
-        client.fetchPath("test-path", true).body()!!.string()
+        client.fetchPath("test-path", null).body()!!.string()
         server.takeRequest()
-        client.fetchPath("test-path", true).body()!!.string()
+        client.fetchPath("test-path", null).body()!!.string()
 
         server.takeRequest().headers.get("If-None-Match") shouldEqual "etag_value"
     }
@@ -101,9 +96,9 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         enqueueResponse("test-body")
         server.enqueue(MockResponse().setResponseCode(304))
 
-        client.fetchPath("test-path", true).body()!!.string()
+        client.fetchPath("test-path", null).body()!!.string()
 
-        client.fetchPath("test-path", true).body()!!.string() shouldEqual "test-body"
+        client.fetchPath("test-path", null).body()!!.string() shouldEqual "test-body"
     }
 
     @Test
@@ -111,45 +106,83 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         enqueueResponse("test-body")
         server.enqueue(MockResponse().setResponseCode(304))
 
-        createClient().fetchPath("test-path", true).body()!!.string()
+        createClient().fetchPath("test-path", null).body()!!.string()
 
-        createClient().fetchPath("test-path", true).body()!!.string() shouldEqual "test-body"
+        createClient().fetchPath("test-path", null).body()!!.string() shouldEqual "test-body"
     }
 
     @Test
-    fun `should not add app version in request`() {
-        val validContext: Context = ApplicationProvider.getApplicationContext()
-        val context: Context = mock()
-        When calling context.packageManager itReturns validContext.packageManager
-        When calling context.packageName itReturns "invalid.package"
-        When calling context.resources itReturns validContext.resources
-        val client = ConfigApiClient(baseUrl, context, mockRasHeaders)
+    fun `should include all query parameter`() {
+        val paramMap = HashMap<String, String>()
+        paramMap["key1"] = "value1"
+        paramMap["key2"] = "value2"
+        val client = ConfigApiClient(baseUrl, mockContext, mockRasHeaders)
 
         enqueueResponse("test-body")
         server.enqueue(MockResponse().setResponseCode(304))
-        val response = client.fetchPath("test-path", true)
+        val response = client.fetchPath("test-path", paramMap)
 
-        response.request().url().queryParameter("appVersion").shouldBeNull()
+        for ((k, v) in paramMap) response.request().url().queryParameter(k) shouldEqual v
     }
 
     @Test
-    fun `should not add country in request`() {
-        val validContext: Context = ApplicationProvider.getApplicationContext()
-        val context: Context = mock()
-        val resource: Resources = mock()
-        val config: Configuration = mock()
-        When calling context.packageManager itReturns validContext.packageManager
-        When calling context.packageName itReturns validContext.packageName
-        When calling context.resources itReturns resource
-        When calling resource.configuration itReturns config
-        When calling config.locales itReturns LocaleList(Locale("invalid", "invalid"))
-        val client = ConfigApiClient(baseUrl, context, mockRasHeaders)
+    fun `should include have empty value query param`() {
+        val paramMap = HashMap<String, String>()
+        paramMap["key1"] = "value1"
+        paramMap["key2"] = ""
+        val client = ConfigApiClient(baseUrl, mockContext, mockRasHeaders)
 
         enqueueResponse("test-body")
         server.enqueue(MockResponse().setResponseCode(304))
-        val response = client.fetchPath("test-path", true)
+        val response = client.fetchPath("test-path", paramMap)
 
-        response.request().url().queryParameter("country").shouldBeNull()
+        response.request().url().queryParameterNames().size shouldEqual 1
+        response.request().url().queryParameter("key1") shouldEqual "value1"
+        response.request().url().queryParameter("key2").shouldBeNull()
+    }
+
+    @Test
+    fun `should include have empty key query param`() {
+        val paramMap = HashMap<String, String>()
+        paramMap["key1"] = "value1"
+        paramMap[""] = "value2"
+        val client = ConfigApiClient(baseUrl, mockContext, mockRasHeaders)
+
+        enqueueResponse("test-body")
+        server.enqueue(MockResponse().setResponseCode(304))
+        val response = client.fetchPath("test-path", paramMap)
+
+        response.request().url().queryParameterNames().size shouldEqual 1
+        response.request().url().queryParameter("key1") shouldEqual "value1"
+        response.request().url().queryParameter("").shouldBeNull()
+    }
+
+    @Test
+    fun `should include have empty key value query param`() {
+        val paramMap = HashMap<String, String>()
+        paramMap["key1"] = "value1"
+        paramMap[""] = ""
+        val client = ConfigApiClient(baseUrl, mockContext, mockRasHeaders)
+
+        enqueueResponse("test-body")
+        server.enqueue(MockResponse().setResponseCode(304))
+        val response = client.fetchPath("test-path", paramMap)
+
+        response.request().url().queryParameterNames().size shouldEqual 1
+        response.request().url().queryParameter("key1") shouldEqual "value1"
+        response.request().url().queryParameter("").shouldBeNull()
+    }
+
+    @Test
+    fun `should not include empty value`() {
+        val paramMap = HashMap<String, String>()
+        val client = ConfigApiClient(baseUrl, mockContext, mockRasHeaders)
+
+        enqueueResponse("test-body")
+        server.enqueue(MockResponse().setResponseCode(304))
+        val response = client.fetchPath("test-path", paramMap)
+
+        response.request().url().queryParameterNames().shouldBeEmpty()
     }
 
     @Test(expected = Exception::class)
@@ -157,10 +190,7 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         createClient(url = "invalid url")
     }
 
-    private fun enqueueResponse(
-        body: String = "test_body",
-        etag: String = "etag_value"
-    ) {
+    private fun enqueueResponse(body: String = "test_body", etag: String = "etag_value") {
         server.enqueue(
             MockResponse()
                 .setBody(body)
@@ -168,12 +198,10 @@ class ConfigApiClientSpec : RobolectricBaseSpec() {
         )
     }
 
-    private fun createClient(
-        url: String = baseUrl,
-        headers: RasSdkHeaders = mockRasHeaders
-    ) = ConfigApiClient(
-        baseUrl = url,
-        context = ApplicationProvider.getApplicationContext(),
-        headers = headers
-    )
+    private fun createClient(url: String = baseUrl, headers: RasSdkHeaders = mockRasHeaders) =
+            ConfigApiClient(
+                    baseUrl = url,
+                    context = ApplicationProvider.getApplicationContext(),
+                    headers = headers
+            )
 }

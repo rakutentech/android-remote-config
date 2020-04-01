@@ -7,7 +7,7 @@ import java.io.IOException
 internal class PublicKeyFetcher(private val client: ConfigApiClient) {
 
     fun fetch(keyId: String): String {
-        val response = client.fetchPath("keys/$keyId", false)
+        val response = client.fetchPath("keys/$keyId", null)
 
         if (!response.isSuccessful) {
             throw IOException("Unexpected response when fetching public key: $response")

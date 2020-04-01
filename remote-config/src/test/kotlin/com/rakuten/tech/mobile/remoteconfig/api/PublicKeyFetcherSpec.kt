@@ -23,7 +23,7 @@ open class PublicKeyFetcherSpec {
         body: String,
         code: Int
     ) {
-        When calling mockApiClient.fetchPath(any(), eq(false)) itReturns Response.Builder()
+        When calling mockApiClient.fetchPath(any(), eq(null)) itReturns Response.Builder()
             .request(Request.Builder().url("https://www.example.com").build())
             .protocol(Protocol.HTTP_2)
             .message("")
@@ -69,7 +69,7 @@ class PublicKeyFetcherNormalSpec : PublicKeyFetcherSpec() {
 
         Verify on mockApiClient that mockApiClient.fetchPath(argForWhich {
             contains("keys/test_key_id")
-        }, eq(false))
+        }, eq(null))
     }
 }
 
