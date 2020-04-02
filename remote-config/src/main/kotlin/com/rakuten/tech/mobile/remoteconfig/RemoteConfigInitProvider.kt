@@ -72,7 +72,8 @@ class RemoteConfigInitProvider : ContentProvider() {
         )
         val configFetcher = ConfigFetcher(
             appId = manifestConfig.appId(),
-            client = client
+            client = client,
+            context = context
         )
         val cache = ConfigCache(
             context = context,

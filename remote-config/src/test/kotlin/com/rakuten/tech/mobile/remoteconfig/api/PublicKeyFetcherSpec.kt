@@ -1,10 +1,16 @@
 package com.rakuten.tech.mobile.remoteconfig.api
 
+import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.argForWhich
+import com.nhaarman.mockitokotlin2.eq
+import com.rakuten.tech.mobile.sdkutils.RasSdkHeaders
 import junit.framework.TestCase
 import okhttp3.*
 import org.amshove.kluent.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.IOException
 
 open class PublicKeyFetcherSpec {
@@ -17,7 +23,7 @@ open class PublicKeyFetcherSpec {
         body: String,
         code: Int
     ) {
-        When calling mockApiClient.fetchPath(any()) itReturns Response.Builder()
+        When calling mockApiClient.fetchPath(any(), eq(null)) itReturns Response.Builder()
             .request(Request.Builder().url("https://www.example.com").build())
             .protocol(Protocol.HTTP_2)
             .message("")
@@ -63,10 +69,12 @@ class PublicKeyFetcherNormalSpec : PublicKeyFetcherSpec() {
 
         Verify on mockApiClient that mockApiClient.fetchPath(argForWhich {
             contains("keys/test_key_id")
-        })
+        }, eq(null))
     }
 }
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [28])
 class PublicKeyFetcherErrorSpec : PublicKeyFetcherSpec() {
 
     private fun enqueueErrorResponse(
@@ -123,6 +131,18 @@ class PublicKeyFetcherErrorSpec : PublicKeyFetcherSpec() {
             }""".trimIndent()
         )
         val fetcher = createFetcher()
+
+        fetcher.fetch("test_key_id")
+    }
+
+    @Test(expected = IOException::class)
+    fun `should throw when valid client but invalid url`() {
+        val mockRasHeaders: RasSdkHeaders = mock()
+        When calling mockRasHeaders.asArray() itReturns emptyArray()
+        enqueueErrorResponse(code = 404)
+
+        val fetcher = PublicKeyFetcher(ConfigApiClient(
+                "https://www.example.com", ApplicationProvider.getApplicationContext(), mockRasHeaders))
 
         fetcher.fetch("test_key_id")
     }
