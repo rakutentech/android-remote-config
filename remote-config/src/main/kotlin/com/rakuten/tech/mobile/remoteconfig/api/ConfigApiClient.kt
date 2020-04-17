@@ -23,7 +23,7 @@ internal class ConfigApiClient @VisibleForTesting constructor(
         appId: String,
         subscriptionKey: String,
         context: Context
-    ) : this (
+    ) : this(
         baseUrl = baseUrl,
         context = context,
         headers = RasSdkHeaders(
@@ -31,7 +31,7 @@ internal class ConfigApiClient @VisibleForTesting constructor(
             subscriptionKey = subscriptionKey,
             sdkName = "Remote Config",
             sdkVersion = BuildConfig.VERSION_NAME
-        )
+            )
     )
 
     @Suppress("SpreadOperator")
@@ -47,14 +47,17 @@ internal class ConfigApiClient @VisibleForTesting constructor(
         throw InvalidRemoteConfigBaseUrlException(exception)
     }
 
-    fun fetchPath(path: String): Response {
-        val url = requestUrl.newBuilder()
-            .addPathSegments(path)
-            .build()
+    fun fetchPath(path: String, paramMap: Map<String, String>?): Response {
+        val builder = requestUrl.newBuilder().addPathSegments(path)
 
-        return client.newCall(
-            Request.Builder()
-                .url(url)
+        if (paramMap != null) {
+            for ((k, v) in paramMap) {
+                if (v.isNotEmpty() && k.isNotEmpty()) builder.addQueryParameter(k, v)
+            }
+        }
+
+        return client.newCall(Request.Builder()
+                .url(builder.build())
                 .build()
         ).execute()
     }
