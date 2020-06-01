@@ -26,7 +26,7 @@ dependency {
 }
 ```
 
-Note: please use/enable R8 to avoid proguard issue with Moshi.
+Note: please use/enable R8 to avoid proguard issue with Moshi. For enabling and more details on R8, please refer to the [Android Developer documentation](https://developer.android.com/studio/build/shrink-code).
 
 ### #2 Set your App Id, Subscription Key, & Base URL
 
