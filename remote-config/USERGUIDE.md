@@ -28,9 +28,12 @@ dependency {
 
 Note: please use/enable R8 to avoid proguard issue with Moshi. For enabling and more details on R8, please refer to the [Android Developer documentation](https://developer.android.com/studio/build/shrink-code).
 
-### #2 Set your App Id, Subscription Key, & Base URL
+### #2 Set your App Id, Subscription Key, Base URL, and Configuration Application Settings
 
 We don't currently host a public API, so you will need to provide your own Base URL for API requests.
+
+Configuration Application Settings is an optional setting ("com.rakuten.tech.mobile.remoteconfig.ApplyDirectly") and is `false` by default.
+If set to `true`, configurations are applied directly when fetched. Otherwise, fetched configuration are applied on next app launch from terminated state.
 
 In your `AndroidManifest.xml`:
 
@@ -49,6 +52,10 @@ In your `AndroidManifest.xml`:
       <meta-data
         android:name="com.rakuten.tech.mobile.ras.ProjectSubscriptionKey"
         android:value="your_subscription_key" />
+
+      <meta-data
+        android:name="com.rakuten.tech.mobile.remoteconfig.ApplyDirectly"
+        android:value="true or false" />
 
     </application>
 </manifest>
@@ -79,7 +86,7 @@ val configMap = remoteConfig.getConfig()
 ## Changelog
 
 ### v1.1.0 (in-progress)
-- TBD
+- SDKCF-1991: Add build settings for applying configuration directly after fetching.
 
 ### v1.0.0 (2019-09-09)
 
