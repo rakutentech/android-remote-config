@@ -22,9 +22,11 @@ repositories {
 }
 
 dependency {
-  implementation 'com.rakuten.tech.mobile.remoteconfig:remote-config:1.0.0'
+  implementation 'com.rakuten.tech.mobile.remoteconfig:remote-config:${latest_version}'
 }
 ```
+
+Note: please use/enable R8 to avoid proguard issue with Moshi. For enabling and more details on R8, please refer to the [Android Developer documentation](https://developer.android.com/studio/build/shrink-code).
 
 ### #2 Set your App Id, Subscription Key, & Base URL
 
@@ -75,6 +77,9 @@ val configMap = remoteConfig.getConfig()
 ```
 
 ## Changelog
+
+### v1.1.0 (in-progress)
+- TBD
 
 ### v1.0.0 (2019-09-09)
 
