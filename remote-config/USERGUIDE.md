@@ -28,9 +28,21 @@ dependency {
 
 Note: please use/enable R8 to avoid proguard issue with Moshi. For enabling and more details on R8, please refer to the [Android Developer documentation](https://developer.android.com/studio/build/shrink-code).
 
-### #2 Set your App Id, Subscription Key, & Base URL
+### #2 Configure SDK settings in AndroidManifest.xml
+The Remote Config SDK is configured via manifest meta-data, the configurable values are:
 
-We don't currently host a public API, so you will need to provide your own Base URL for API requests.
+| Field                        | Datatype| Manifest Key                                         | Optional   | Default   |
+|------------------------------|---------|------------------------------------------------------|------------|---------- |
+| Base URL                     | String  | `com.rakuten.tech.mobile.remoteconfig.BaseUrl`       | ❌         | 🚫        |
+| RAS Application ID           | String  | `com.rakuten.tech.mobile.ras.AppId`                  | ❌         | 🚫        |
+| RAS Project Subscription Key | String  | `com.rakuten.tech.mobile.ras.ProjectSubscriptionKey` | ❌         | 🚫        |
+| Config Application           | boolean | `com.rakuten.tech.mobile.remoteconfig.ApplyDirectly` | ✅         | `false`   |
+| Polling Delay (in secs)      | integer | `com.rakuten.tech.mobile.remoteconfig.PollingDelay`  | ✅         | `3600`    |
+
+Notes:
+* We don't currently host a public API, so you will need to provide your own Base URL for API requests.
+* If Config Application is set to `true`, config are applied directly when fetched. Otherwise, fetched config are applied on next app launch from terminated state.
+* By default, config values are fetched from the API at launch time and then periodically fetched again every 60 minutes. Set the Polling delay to the desired interval of fetching config values.
 
 In your `AndroidManifest.xml`:
 
@@ -50,42 +62,22 @@ In your `AndroidManifest.xml`:
         android:name="com.rakuten.tech.mobile.ras.ProjectSubscriptionKey"
         android:value="your_subscription_key" />
 
-    </application>
-</manifest>
-```
-
-### #3 Set the Config Fetching and Application Settings
-
-These settings are optional.
-By default, config values are fetched from the API at launch time and then periodically fetched again every 60 minutes.
-The newly fetched config values will not be applied until the next App launch.
-This also means that the first time the App is launched, the fallback values will be used instead of fetched values.
-
-To modify this behavior, the following settings can be set.
-
-Set the Config Fetching Setting ("com.rakuten.tech.mobile.remoteconfig.PollingDelay") to change the interval of fetching config values.
-Set the Config Application Settings ("com.rakuten.tech.mobile.remoteconfig.ApplyDirectly") to `true` to apply the config values directly when fetched.
-
-In your `AndroidManifest.xml`:
-
-```xml
-<manifest>
-    <application>
-      ...
+      <meta-data
+        android:name="com.rakuten.tech.mobile.remoteconfig.ApplyDirectly"
+        android:value="false" />
 
       <meta-data
         android:name="com.rakuten.tech.mobile.remoteconfig.PollingDelay"
-        android:value="integer_value_in_minutes" />
-
-      <meta-data
-        android:name="com.rakuten.tech.mobile.remoteconfig.ApplyDirectly"
-        android:value="integer_value_in_minutes" />
+        android:value="3600" />
 
     </application>
 </manifest>
 ```
 
-### #4 Retrieve Config Values
+### #3 Retrieve Config Values
+By default, config values are fetched from the API at launch time and then periodically fetched again every 60 minutes.
+The newly fetched config values will not be applied until the next App launch.
+This also means that the first time the App is launched, the fallback values will be used instead of fetched values.
 
 ```kotlin
 val remoteConfig = RemoteConfig.instance()
@@ -103,10 +95,26 @@ val testNumber = remoteConfig.getNumber("numberKeyName", 1)
 val configMap = remoteConfig.getConfig()
 ```
 
+### #4 Manual Trigger for Fetching Config
+Fetching config can be triggered manually by the app. This can be used in cases where updated config is needed when certain events occurred or a specific screen is displayed.
+
+```kotlin
+remoteConfig.fetchAndApplyConfig(object: FetchConfigCompletionListener {
+  override fun onFetchError(ex: Exception) {
+    // do something with error
+  }
+
+  override fun onFetchComplete(config: Map<String, String>)  {
+    // do something with fetched config
+  }
+})
+```
+
 ## Changelog
 
 ### v1.1.0 (in-progress)
-- TBD
+- SDKCF-1991: Add build settings for applying configuration directly after fetching.
+- SDKCF-2457: Add build settings for config fetching frequency, and new API for manual trigger for fetching config.
 
 ### v1.0.0 (2019-09-09)
 

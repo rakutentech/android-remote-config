@@ -14,14 +14,16 @@ internal class ConfigCache @VisibleForTesting constructor(
     private val fetcher: ConfigFetcher,
     private val file: File,
     private val poller: AsyncPoller,
-    private val verifier: ConfigVerifier
+    private val verifier: ConfigVerifier,
+    private val applyDirectly: Boolean
 ) {
 
     constructor(
         context: Context,
         configFetcher: ConfigFetcher,
         verifier: ConfigVerifier,
-        poller: AsyncPoller
+        poller: AsyncPoller,
+        applyDirectly: Boolean
     ) : this(
         configFetcher,
         File(
@@ -29,7 +31,8 @@ internal class ConfigCache @VisibleForTesting constructor(
             "com.rakuten.tech.mobile.remoteconfig.configcache.json"
         ),
         poller,
-        verifier
+        verifier,
+        applyDirectly
     )
 
     private var configBody = applyConfig()
@@ -83,10 +86,13 @@ internal class ConfigCache @VisibleForTesting constructor(
                 if (verifier.verify(fetchedConfig)) {
                     file.writeText(fetchedConfig.toJsonString())
                 }
+
                 if (listener != null) {
                     // if not null, this execution is from manual trigger.
                     configBody = applyConfig()
                     listener.onFetchComplete(configBody)
+                } else if (applyDirectly) {
+                    configBody = applyConfig()
                 }
             } catch (error: Exception) {
                 Log.e(TAG, "Error while fetching config from server", error)

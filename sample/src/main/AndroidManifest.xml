@@ -25,6 +25,10 @@
       android:value="${subscriptionKey}" />
 
     <meta-data
+      android:name="com.rakuten.tech.mobile.remoteconfig.ApplyDirectly"
+      android:value="true" />
+
+    <meta-data
       android:name="com.rakuten.tech.mobile.remoteconfig.PollingDelay"
       android:value="5" />
 

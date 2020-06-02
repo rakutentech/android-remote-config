@@ -5,13 +5,13 @@ import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
 
 internal class AsyncPoller @VisibleForTesting constructor(
-    delayInMinutes: Int,
+    delayInSeconds: Int,
     private val scope: CoroutineScope
 ) {
 
-    constructor(delayInMinutes: Int) : this(delayInMinutes, GlobalScope)
+    constructor(delayInSeconds: Int) : this(delayInSeconds, GlobalScope)
 
-    private val delayInMilliseconds = TimeUnit.MINUTES.toMillis(delayInMinutes.toLong())
+    private val delayInMilliseconds = TimeUnit.SECONDS.toMillis(delayInSeconds.toLong())
 
     fun start(method: () -> Unit) {
         scope.launch {

@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import com.rakuten.tech.mobile.remoteconfig.FetchConfigCompletionListener
 import com.rakuten.tech.mobile.remoteconfig.RemoteConfig
 import com.rakuten.tech.mobile.remoteconfig.sample.databinding.ActivityMainBinding
 
@@ -57,5 +58,16 @@ class MainActivity @VisibleForTesting constructor(
 
         Toast.makeText(this, message, Toast.LENGTH_SHORT)
             .show()
+
+        remoteConfig.fetchAndApplyConfig(object: FetchConfigCompletionListener {
+            override fun onFetchError(ex: Exception) {
+                // do something with error
+            }
+
+            override fun onFetchComplete(config: Map<String, String>) {
+                // do something with fetched config
+            }
+
+        })
     }
 }

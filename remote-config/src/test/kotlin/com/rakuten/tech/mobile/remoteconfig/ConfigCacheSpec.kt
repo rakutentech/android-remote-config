@@ -7,6 +7,8 @@ import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
+import kotlinx.coroutines.*
+import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.*
 import org.junit.Test
 import java.io.File
@@ -21,7 +23,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
 
     @Test
     fun `should be empty by default`() {
-        val cache = ConfigCache(context, stubFetcher, stubVerifier, stubPoller)
+        val cache = ConfigCache(context, stubFetcher, stubVerifier, stubPoller, false)
 
         cache.getConfig() shouldEqual emptyMap()
     }
@@ -98,7 +100,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
             throw IOException("Failed.")
         }
 
-        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier, false)
 
         cache["foo"] shouldEqual "bar"
     }
@@ -108,9 +110,9 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         val fileName = "cache.json"
         When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
         When calling stubVerifier.verify(any()) itReturns false
-        ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+        ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier, false)
 
-        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier)
+        val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier, false)
 
         cache["foo"] shouldEqual null
     }
@@ -125,9 +127,40 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
 
         When calling stubVerifier.verify(any()) itReturns false
 
-        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier)
+        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, false)
 
         cache["foo"] shouldEqual null
+    }
+
+    @Test
+    fun `should not apply after fetching`() = runBlockingTest {
+        val filename = "cache.json"
+
+        When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
+        When calling stubVerifier.verify(any()) itReturns true
+        When calling stubPoller.start(any()) itAnswers {
+            (it.arguments[0] as () -> Unit).invoke()
+        }
+
+        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, false)
+        advanceTimeBy(1000)
+        cache.getConfig().shouldBeEmpty()
+    }
+
+    @Test
+    fun `should apply after fetching`() = runBlockingTest {
+        val filename = "cache.json"
+
+        When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
+        When calling stubVerifier.verify(any()) itReturns true
+        When calling stubPoller.start(any()) itAnswers {
+            (it.arguments[0] as () -> Unit).invoke()
+        }
+
+        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, true)
+        advanceTimeBy(1000)
+        cache.getConfig().shouldNotBeEmpty()
+        cache["foo"] shouldEqual "bar"
     }
 
     private fun `create cache with fetched config`(
@@ -140,7 +173,7 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         }
         When calling stubVerifier.verify(any()) itReturns true
 
-        return ConfigCache(stubFetcher, file, stubPoller, stubVerifier)
+        return ConfigCache(stubFetcher, file, stubPoller, stubVerifier, false)
     }
 
     private fun createConfig(values: Map<String, String>): Config {
