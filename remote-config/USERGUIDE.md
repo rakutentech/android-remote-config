@@ -28,12 +28,19 @@ dependency {
 
 Note: please use/enable R8 to avoid proguard issue with Moshi. For enabling and more details on R8, please refer to the [Android Developer documentation](https://developer.android.com/studio/build/shrink-code).
 
-### #2 Set your App Id, Subscription Key, Base URL, and Configuration Application Settings
+### #2 Configure SDK settings in AndroidManifest.xml
+The Remote Config SDK is configured via manifest meta-data, the configurable values are:
 
-We don't currently host a public API, so you will need to provide your own Base URL for API requests.
+| Field                        | Datatype| Manifest Key                                         | Optional   | Default   |
+|------------------------------|---------|------------------------------------------------------|------------|---------- |
+| Base URL                     | String  | `com.rakuten.tech.mobile.remoteconfig.BaseUrl`       | ❌         | 🚫        |
+| RAS Application ID           | String  | `com.rakuten.tech.mobile.ras.AppId`                  | ❌         | 🚫        |
+| RAS Project Subscription Key | String  | `com.rakuten.tech.mobile.ras.ProjectSubscriptionKey` | ❌         | 🚫        |
+| Config Application           | boolean | `com.rakuten.tech.mobile.remoteconfig.ApplyDirectly` | ✅         | `false`   |
 
-Configuration Application Settings is an optional setting ("com.rakuten.tech.mobile.remoteconfig.ApplyDirectly") and is `false` by default.
-If set to `true`, configurations are applied directly when fetched. Otherwise, fetched configuration are applied on next app launch from terminated state.
+Notes:
+* We don't currently host a public API, so you will need to provide your own Base URL for API requests.
+* If Config Application is set to `true`, config are applied directly when fetched. Otherwise, fetched config are applied on next app launch from terminated state.
 
 In your `AndroidManifest.xml`:
 
@@ -55,7 +62,7 @@ In your `AndroidManifest.xml`:
 
       <meta-data
         android:name="com.rakuten.tech.mobile.remoteconfig.ApplyDirectly"
-        android:value="true or false" />
+        android:value="false" />
 
     </application>
 </manifest>

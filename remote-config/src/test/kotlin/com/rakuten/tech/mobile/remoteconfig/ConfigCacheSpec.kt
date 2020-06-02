@@ -8,6 +8,7 @@ import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import kotlinx.coroutines.*
+import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.*
 import org.junit.Test
 import java.io.File
@@ -132,37 +133,34 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     }
 
     @Test
-    fun `should not apply after fetching`() {
+    fun `should not apply after fetching`() = runBlockingTest {
         val filename = "cache.json"
 
         When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
         When calling stubVerifier.verify(any()) itReturns true
-        val cache = ConfigCache(stubFetcher, createFile(filename), AsyncPoller(1), stubVerifier, false)
-
-        CoroutineScope(Dispatchers.Main).launch {
-            withContext(Dispatchers.Default) {
-                val cache = ConfigCache(stubFetcher, createFile(filename), AsyncPoller(1),
-                        stubVerifier, true)
-                delay(1000)
-                cache.getConfig().shouldBeEmpty()
-            }
+        When calling stubPoller.start(any()) itAnswers {
+            (it.arguments[0] as () -> Unit).invoke()
         }
+
+        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, false)
+        advanceTimeBy(1000)
+        cache.getConfig().shouldBeEmpty()
     }
 
     @Test
-    fun `should apply after fetching`() {
+    fun `should apply after fetching`() = runBlockingTest {
         val filename = "cache.json"
+
         When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
         When calling stubVerifier.verify(any()) itReturns true
-        CoroutineScope(Dispatchers.Main).launch {
-            withContext(Dispatchers.Default) {
-                val cache = ConfigCache(stubFetcher, createFile(filename), AsyncPoller(1),
-                        stubVerifier, true)
-                delay(1000)
-                cache.getConfig().shouldNotBeEmpty()
-                cache["foo"] shouldEqual "bar"
-            }
+        When calling stubPoller.start(any()) itAnswers {
+            (it.arguments[0] as () -> Unit).invoke()
         }
+
+        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, true)
+        advanceTimeBy(1000)
+        cache.getConfig().shouldNotBeEmpty()
+        cache["foo"] shouldEqual "bar"
     }
 
     private fun `create cache with fetched config`(
