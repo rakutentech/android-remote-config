@@ -50,6 +50,16 @@ class RemoteConfigInitProvider : ContentProvider() {
             value = "60"
         )
         fun pollingDelay(): Int
+
+        /**
+         * Flag for applying configuration directly after fetching.
+         * If not set or set to false, fetched configuration are applied on next app launch from terminated state.
+         **/
+        @MetaData(
+            key = "com.rakuten.tech.mobile.remoteconfig.ApplyDirectly",
+            value = "false"
+        )
+        fun shouldApplyDirectly(): Boolean
     }
 
     @Suppress("LongMethod")
@@ -79,7 +89,8 @@ class RemoteConfigInitProvider : ContentProvider() {
             context = context,
             configFetcher = configFetcher,
             verifier = verifier,
-            poller = AsyncPoller(manifestConfig.pollingDelay())
+            poller = AsyncPoller(manifestConfig.pollingDelay()),
+            applyDirectly = manifestConfig.shouldApplyDirectly()
         )
 
         RemoteConfig.init(cache)

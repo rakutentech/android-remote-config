@@ -12,16 +12,18 @@ import java.io.File
 @Suppress("TooGenericExceptionCaught")
 internal class ConfigCache @VisibleForTesting constructor(
     fetcher: ConfigFetcher,
-    file: File,
+    private val file: File,
     poller: AsyncPoller,
-    private val verifier: ConfigVerifier
+    private val verifier: ConfigVerifier,
+    applyDirectly: Boolean
 ) {
 
     constructor(
         context: Context,
         configFetcher: ConfigFetcher,
         verifier: ConfigVerifier,
-        poller: AsyncPoller
+        poller: AsyncPoller,
+        applyDirectly: Boolean
     ) : this(
         configFetcher,
         File(
@@ -29,20 +31,11 @@ internal class ConfigCache @VisibleForTesting constructor(
             "com.rakuten.tech.mobile.remoteconfig.configcache.json"
         ),
         poller,
-        verifier
+        verifier,
+        applyDirectly
     )
 
-    private val configBody = if (file.exists()) {
-        val text = file.readText()
-
-        if (text.isNotBlank()) {
-            parseConfigBody(text) ?: emptyMap()
-        } else {
-            emptyMap()
-        }
-    } else {
-        emptyMap()
-    }
+    private var configBody = applyConfig()
 
     init {
         poller.start {
@@ -53,6 +46,9 @@ internal class ConfigCache @VisibleForTesting constructor(
 
                 if (verifier.verify(fetchedConfig)) {
                     file.writeText(fetchedConfig.toJsonString())
+                }
+                if (applyDirectly) {
+                    configBody = applyConfig()
                 }
             } catch (error: Exception) {
                 Log.e("RemoteConfig", "Error while fetching config from server", error)
@@ -75,6 +71,18 @@ internal class ConfigCache @VisibleForTesting constructor(
     } catch (exception: Exception) {
         Log.e("RemoteConfig", "Error parsing config from cached file", exception)
         null
+    }
+
+    private fun applyConfig() = if (file.exists()) {
+        val text = file.readText()
+
+        if (text.isNotBlank()) {
+            parseConfigBody(text) ?: emptyMap()
+        } else {
+            emptyMap()
+        }
+    } else {
+        emptyMap()
     }
 }
 
