@@ -1,10 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig
 
 import androidx.annotation.VisibleForTesting
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
 
 internal class AsyncPoller @VisibleForTesting constructor(
@@ -24,5 +21,9 @@ internal class AsyncPoller @VisibleForTesting constructor(
                 delay(delayInMilliseconds)
             }
         }
+    }
+
+    fun stop() {
+        scope.cancel()
     }
 }

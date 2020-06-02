@@ -11,9 +11,9 @@ import java.io.File
 
 @Suppress("TooGenericExceptionCaught")
 internal class ConfigCache @VisibleForTesting constructor(
-    fetcher: ConfigFetcher,
-    file: File,
-    poller: AsyncPoller,
+    private val fetcher: ConfigFetcher,
+    private val file: File,
+    private val poller: AsyncPoller,
     private val verifier: ConfigVerifier
 ) {
 
@@ -32,7 +32,36 @@ internal class ConfigCache @VisibleForTesting constructor(
         verifier
     )
 
-    private val configBody = if (file.exists()) {
+    private var configBody = applyConfig()
+
+    init {
+        startPoller(null)
+    }
+
+    operator fun get(key: String) = configBody[key]
+
+    fun getConfig(): Map<String, String> = configBody
+
+    fun fetchConfig(listener: FetchConfigCompletionListener) {
+        // For resetting the polling delay.
+        poller.stop()
+        startPoller(listener)
+    }
+
+    private fun parseConfigBody(fileText: String) = try {
+        val config = Config.fromJsonString(fileText)
+
+        if (verifier.verify(config)) {
+            ConfigResponse.fromJsonString(config.rawBody).body
+        } else {
+            null
+        }
+    } catch (exception: Exception) {
+        Log.e(TAG, "Error parsing config from cached file", exception)
+        null
+    }
+
+    private fun applyConfig() = if (file.exists()) {
         val text = file.readText()
 
         if (text.isNotBlank()) {
@@ -44,7 +73,7 @@ internal class ConfigCache @VisibleForTesting constructor(
         emptyMap()
     }
 
-    init {
+    private fun startPoller(listener: FetchConfigCompletionListener?) {
         poller.start {
             try {
                 val fetchedConfig = fetcher.fetch()
@@ -54,27 +83,20 @@ internal class ConfigCache @VisibleForTesting constructor(
                 if (verifier.verify(fetchedConfig)) {
                     file.writeText(fetchedConfig.toJsonString())
                 }
+                if (listener != null) {
+                    // if not null, this execution is from manual trigger.
+                    configBody = applyConfig()
+                    listener.onFetchComplete(configBody)
+                }
             } catch (error: Exception) {
-                Log.e("RemoteConfig", "Error while fetching config from server", error)
+                Log.e(TAG, "Error while fetching config from server", error)
+                listener?.onFetchError(error)
             }
         }
     }
 
-    operator fun get(key: String) = configBody[key]
-
-    fun getConfig(): Map<String, String> = configBody
-
-    private fun parseConfigBody(fileText: String) = try {
-        val config = Config.fromJsonString(fileText)
-
-        if (verifier.verify(config)) {
-            ConfigResponse.fromJsonString(config.rawBody).body
-        } else {
-            null
-        }
-    } catch (exception: Exception) {
-        Log.e("RemoteConfig", "Error parsing config from cached file", exception)
-        null
+    companion object {
+        private const val TAG = "RC_ConfigCache"
     }
 }
 

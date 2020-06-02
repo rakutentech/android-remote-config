@@ -48,6 +48,14 @@ abstract class RemoteConfig internal constructor() {
      */
     abstract fun getConfig(): Map<String, String>
 
+    /**
+     * This method is the manual trigger for fetching config values.
+     * Config values are applied directly after fetch.
+     *
+     * @param listener callback for config fetch process result.
+     */
+    abstract fun fetchAndApplyConfig(listener: FetchConfigCompletionListener)
+
     companion object {
         private var instance: RemoteConfig = NotInitializedRemoteConfig()
 
@@ -71,4 +79,5 @@ internal class NotInitializedRemoteConfig : RemoteConfig() {
     override fun getBoolean(key: String, fallback: Boolean): Boolean = fallback
     override fun <T : Number> getNumber(key: String, fallback: T) = fallback
     override fun getConfig() = emptyMap<String, String>()
+    override fun fetchAndApplyConfig(listener: FetchConfigCompletionListener) {}
 }

@@ -30,11 +30,7 @@ internal class RsaEncryptor @VisibleForTesting constructor(
             keyStore.getEntry(KEYSTORE_ALIAS, null) as KeyStore.PrivateKeyEntry?
         } catch (exception: ClassCastException) {
             // Key wasn't an RSA key, so we need to generate a new one
-            Log.d(
-                "Remote Config",
-                "Error retrieving key from KeyStore. A new key will be generated.",
-                exception
-            )
+            Log.d(TAG, "Error retrieving key from KeyStore. A new key will be generated.", exception)
             null
         }
     )?.certificate?.publicKey ?: keyGenerator.generateKey(context).public
@@ -66,6 +62,7 @@ internal class RsaEncryptor @VisibleForTesting constructor(
     companion object {
         private const val KEYSTORE_ALIAS = "remote-config-public-key-encryption-decryption"
         private const val CIPHER_TRANSFORMATION = "RSA/ECB/PKCS1Padding"
+        private const val TAG = "RC_RSA"
     }
 }
 

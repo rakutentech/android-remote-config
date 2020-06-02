@@ -54,11 +54,38 @@ In your `AndroidManifest.xml`:
 </manifest>
 ```
 
-### #3 Retrieve Config Values
+### #3 Set the Config Fetching and Application Settings
 
-Config values are fetched from the API at launch time and then periodically fetched again every 60 minutes.
-However, newly fetched config values will not be applied until the next App launch.
+These settings are optional.
+By default, config values are fetched from the API at launch time and then periodically fetched again every 60 minutes.
+The newly fetched config values will not be applied until the next App launch.
 This also means that the first time the App is launched, the fallback values will be used instead of fetched values.
+
+To modify this behavior, the following settings can be set.
+
+Set the Config Fetching Setting ("com.rakuten.tech.mobile.remoteconfig.PollingDelay") to change the interval of fetching config values.
+Set the Config Application Settings ("com.rakuten.tech.mobile.remoteconfig.ApplyDirectly") to `true` to apply the config values directly when fetched.
+
+In your `AndroidManifest.xml`:
+
+```xml
+<manifest>
+    <application>
+      ...
+
+      <meta-data
+        android:name="com.rakuten.tech.mobile.remoteconfig.PollingDelay"
+        android:value="integer_value_in_minutes" />
+
+      <meta-data
+        android:name="com.rakuten.tech.mobile.remoteconfig.ApplyDirectly"
+        android:value="integer_value_in_minutes" />
+
+    </application>
+</manifest>
+```
+
+### #4 Retrieve Config Values
 
 ```kotlin
 val remoteConfig = RemoteConfig.instance()
