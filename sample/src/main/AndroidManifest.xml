@@ -26,11 +26,11 @@
 
     <meta-data
       android:name="com.rakuten.tech.mobile.remoteconfig.ApplyDirectly"
-      android:value="true" />
+      android:value="false" />
 
     <meta-data
       android:name="com.rakuten.tech.mobile.remoteconfig.PollingDelay"
-      android:value="300" />
+      android:value="30" />
 
     <activity android:name=".MainActivity">
       <intent-filter>
