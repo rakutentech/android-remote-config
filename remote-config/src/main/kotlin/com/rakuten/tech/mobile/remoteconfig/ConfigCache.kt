@@ -83,9 +83,7 @@ internal class ConfigCache @VisibleForTesting constructor(
 
                 verifier.ensureFetchedKey(fetchedConfig.keyId)
 
-                if (verifier.verify(fetchedConfig)) {
-                    file.writeText(fetchedConfig.toJsonString())
-                }
+                if (verifier.verify(fetchedConfig)) file.writeText(fetchedConfig.toJsonString())
 
                 if (listener != null) {
                     // if not null, this execution is from manual trigger.

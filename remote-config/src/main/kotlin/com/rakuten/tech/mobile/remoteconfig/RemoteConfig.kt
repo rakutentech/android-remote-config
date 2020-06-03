@@ -79,5 +79,6 @@ internal class NotInitializedRemoteConfig : RemoteConfig() {
     override fun getBoolean(key: String, fallback: Boolean): Boolean = fallback
     override fun <T : Number> getNumber(key: String, fallback: T) = fallback
     override fun getConfig() = emptyMap<String, String>()
+    @Suppress("EmptyFunctionBlock")
     override fun fetchAndApplyConfig(listener: FetchConfigCompletionListener) {}
 }

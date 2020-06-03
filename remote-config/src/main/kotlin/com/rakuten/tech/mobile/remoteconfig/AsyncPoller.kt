@@ -1,7 +1,11 @@
 package com.rakuten.tech.mobile.remoteconfig
 
 import androidx.annotation.VisibleForTesting
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.util.concurrent.TimeUnit
 
 internal class AsyncPoller @VisibleForTesting constructor(
@@ -12,9 +16,10 @@ internal class AsyncPoller @VisibleForTesting constructor(
     constructor(delayInSeconds: Int) : this(delayInSeconds, GlobalScope)
 
     private val delayInMilliseconds = TimeUnit.SECONDS.toMillis(delayInSeconds.toLong())
+    private var job: Job? = null
 
     fun start(method: () -> Unit) {
-        scope.launch {
+        job = scope.launch {
             repeat(Int.MAX_VALUE) {
                 method.invoke()
 
@@ -24,6 +29,6 @@ internal class AsyncPoller @VisibleForTesting constructor(
     }
 
     fun stop() {
-        scope.cancel()
+        job?.cancel()
     }
 }

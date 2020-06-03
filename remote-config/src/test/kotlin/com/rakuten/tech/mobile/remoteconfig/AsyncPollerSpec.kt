@@ -12,7 +12,7 @@ class AsyncPollerSpec {
     @Test
     fun `should invoke the provided function`() {
         var numberOfInvocations = 0
-        val poller = AsyncPoller(1, testScope)
+        val poller = AsyncPoller(60, testScope)
 
         poller.start { numberOfInvocations++ }
 
@@ -22,12 +22,24 @@ class AsyncPollerSpec {
     @Test
     fun `should poll at the specified interval`() {
         var numberOfInvocations = 0
-        val poller = AsyncPoller(1, testScope)
+        val poller = AsyncPoller(60, testScope)
 
         poller.start { numberOfInvocations++ }
 
         testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(5))
 
         numberOfInvocations shouldEqual 6
+    }
+
+    @Test
+    fun `should stop poll`() {
+        var numberOfInvocations = 0
+        val poller = AsyncPoller(60, testScope)
+
+        poller.start { numberOfInvocations++ }
+        poller.stop()
+        testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(5))
+
+        numberOfInvocations shouldEqual 1
     }
 }

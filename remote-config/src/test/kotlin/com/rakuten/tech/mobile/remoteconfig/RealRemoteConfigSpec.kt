@@ -1,10 +1,8 @@
 package com.rakuten.tech.mobile.remoteconfig
 
 import com.nhaarman.mockitokotlin2.mock
-import org.amshove.kluent.When
-import org.amshove.kluent.calling
-import org.amshove.kluent.itReturns
-import org.amshove.kluent.shouldEqual
+import org.amshove.kluent.*
+import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
 
@@ -13,12 +11,24 @@ open class RealRemoteConfigSpec : RobolectricBaseSpec() {
 
     private val stubCache: ConfigCache = mock()
 
-    internal fun createRemoteConfig(vararg keyValues: Pair<String, String>): RealRemoteConfig {
+    internal fun createRemoteConfig(
+        vararg keyValues: Pair<String, String>,
+        isError: Boolean = false
+    ): RealRemoteConfig {
         for (entry in keyValues.asList()) {
             When calling stubCache[entry.first] itReturns entry.second
         }
 
         When calling stubCache.getConfig() itReturns hashMapOf(*keyValues)
+        if (isError) {
+            When calling stubCache.fetchConfig(any()) itAnswers {
+                (it.arguments[0] as FetchConfigCompletionListener).onFetchError(java.lang.Exception("fetch error"))
+            }
+        } else {
+            When calling stubCache.fetchConfig(any()) itAnswers {
+                (it.arguments[0] as FetchConfigCompletionListener).onFetchComplete(hashMapOf(*keyValues))
+            }
+        }
 
         return RealRemoteConfig(stubCache)
     }
@@ -124,5 +134,45 @@ class RealRemoteConfigGetConfigSpec : RealRemoteConfigSpec() {
 
         remoteConfig.getConfig()["test_key"] shouldEqual "test_value"
         remoteConfig.getConfig()["another_test_key"] shouldEqual "another_test_value"
+    }
+}
+
+class RealRemoteConfigFetchConfigSpec : RealRemoteConfigSpec() {
+    @Test
+    fun `should fetch config`() {
+        val remoteConfig = createRemoteConfig(
+                "test_key" to "test_value",
+                "another_test_key" to "another_test_value"
+        )
+
+        remoteConfig.fetchAndApplyConfig(object : FetchConfigCompletionListener {
+            override fun onFetchError(ex: Exception) {
+                Assert.fail()
+            }
+
+            override fun onFetchComplete(config: Map<String, String>) {
+                config["test_key"] shouldEqual "test_value"
+                config["another_test_key"] shouldEqual "another_test_value"
+            }
+        })
+    }
+
+    @Test
+    fun `should return error when fetching config`() {
+        val remoteConfig = createRemoteConfig(
+                "test_key" to "test_value",
+                "another_test_key" to "another_test_value",
+                isError = true
+        )
+
+        remoteConfig.fetchAndApplyConfig(object : FetchConfigCompletionListener {
+            override fun onFetchError(ex: Exception) {
+                ex.message shouldEqual "fetch error"
+            }
+
+            override fun onFetchComplete(config: Map<String, String>) {
+                Assert.fail()
+            }
+        })
     }
 }

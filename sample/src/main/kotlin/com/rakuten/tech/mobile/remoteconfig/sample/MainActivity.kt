@@ -47,6 +47,21 @@ class MainActivity @VisibleForTesting constructor(
 
     fun onGetConfigClick() = showConfigToast("Config") { remoteConfig.getConfig() }
 
+    fun onFetchConfigClick() = remoteConfig.fetchAndApplyConfig(object: FetchConfigCompletionListener {
+        override fun onFetchError(ex: Exception) {
+            displayToast("Error retrieving config values: ${ex.message}")
+        }
+
+        override fun onFetchComplete(config: Map<String, String>) {
+            displayToast("Config = $config")
+        }
+
+        private fun displayToast(message: String) {
+            runOnUiThread { Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()}
+        }
+    })
+
+
     private fun <T> showConfigToast(title: String, configGetter: () -> T) {
         val message = try {
             "$title = ${configGetter.invoke()}"
@@ -58,16 +73,5 @@ class MainActivity @VisibleForTesting constructor(
 
         Toast.makeText(this, message, Toast.LENGTH_SHORT)
             .show()
-
-        remoteConfig.fetchAndApplyConfig(object: FetchConfigCompletionListener {
-            override fun onFetchError(ex: Exception) {
-                // do something with error
-            }
-
-            override fun onFetchComplete(config: Map<String, String>) {
-                // do something with fetched config
-            }
-
-        })
     }
 }

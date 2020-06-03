@@ -1,8 +1,10 @@
 package com.rakuten.tech.mobile.remoteconfig
 
 import com.nhaarman.mockitokotlin2.mock
+import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBeInstanceOf
 import org.amshove.kluent.shouldEqual
+import org.junit.Assert
 import org.junit.Test
 
 class RemoteConfigSpec {
@@ -36,5 +38,19 @@ class RemoteConfigSpec {
     fun `should return empty map when not initialized`() {
         RemoteConfig.instance()
             .getConfig() shouldEqual emptyMap()
+    }
+
+    @Test
+    fun `should not call listener when not initialized`() = runBlockingTest {
+        RemoteConfig.instance().fetchAndApplyConfig(object : FetchConfigCompletionListener {
+            override fun onFetchError(ex: Exception) {
+                Assert.fail()
+            }
+
+            override fun onFetchComplete(config: Map<String, String>) {
+                Assert.fail()
+            }
+        })
+        advanceTimeBy(1000)
     }
 }

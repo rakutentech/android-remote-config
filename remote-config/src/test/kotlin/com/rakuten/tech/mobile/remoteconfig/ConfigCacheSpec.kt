@@ -10,16 +10,48 @@ import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.*
+import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.io.IOException
 
-class ConfigCacheSpec : RobolectricBaseSpec() {
+@Ignore
+open class ConfigCacheSpec : RobolectricBaseSpec() {
 
-    private val context = ApplicationProvider.getApplicationContext<Context>().applicationContext
-    private val stubFetcher: ConfigFetcher = mock()
-    private val stubPoller: AsyncPoller = mock()
-    private val stubVerifier: ConfigVerifier = mock()
+    internal val context = ApplicationProvider.getApplicationContext<Context>().applicationContext
+    internal val stubFetcher: ConfigFetcher = mock()
+    internal val stubPoller: AsyncPoller = mock()
+    internal val stubVerifier: ConfigVerifier = mock()
+
+    internal fun `create cache with fetched config`(
+        configValues: Map<String, String> = hashMapOf("testKey" to "test_value"),
+        file: File = createFile("cache.json")
+    ): ConfigCache {
+        When calling stubFetcher.fetch() itReturns createConfig(configValues)
+        When calling stubPoller.start(any()) itAnswers {
+            (it.arguments[0] as () -> Unit).invoke()
+        }
+        When calling stubVerifier.verify(any()) itReturns true
+
+        return ConfigCache(stubFetcher, file, stubPoller, stubVerifier, false)
+    }
+
+    internal fun createConfig(values: Map<String, String>): Config {
+        val body = jsonAdapter<ConfigResponse>()
+                .toJson(ConfigResponse(values, "test_key_id"))
+
+        return Config(
+                rawBody = body,
+                signature = "test_signature",
+                keyId = "test_key_id"
+        )
+    }
+
+    internal fun createFile(name: String) = File(context.filesDir, name)
+}
+
+class ConfigCacheGetConfigSpec : ConfigCacheSpec() {
 
     @Test
     fun `should be empty by default`() {
@@ -33,8 +65,8 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         val file = createFile("cache.json")
         file.writeText("")
         val cache = `create cache with fetched config`(
-            file = file,
-            configValues = hashMapOf("foo" to "bar")
+                file = file,
+                configValues = hashMapOf("foo" to "bar")
         )
 
         cache.getConfig() shouldEqual emptyMap()
@@ -45,8 +77,8 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         val file = createFile("cache.json")
         file.writeText("foo: bar")
         val cache = `create cache with fetched config`(
-            file = file,
-            configValues = hashMapOf("foo" to "bar")
+                file = file,
+                configValues = hashMapOf("foo" to "bar")
         )
 
         cache.getConfig() shouldEqual emptyMap()
@@ -57,17 +89,20 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         val file = createFile("cache.json")
         file.writeText("{foo: bar}")
         val cache = `create cache with fetched config`(
-            file = file,
-            configValues = hashMapOf("foo" to "bar")
+                file = file,
+                configValues = hashMapOf("foo" to "bar")
         )
 
         cache.getConfig() shouldEqual emptyMap()
     }
+}
+
+class ConfigCacheApplyConfigSpec : ConfigCacheSpec() {
 
     @Test
     fun `should apply the fetched config the next time App is launched`() {
         `create cache with fetched config`(
-            configValues = hashMapOf("foo" to "bar")
+                configValues = hashMapOf("foo" to "bar")
         )
 
         val cache = `create cache with fetched config`()
@@ -78,11 +113,11 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     @Test
     fun `should not apply the fetched config while the App is running`() {
         `create cache with fetched config`(
-            configValues = hashMapOf("foo" to "bar")
+                configValues = hashMapOf("foo" to "bar")
         )
 
         val cache = `create cache with fetched config`(
-            configValues = hashMapOf("foo" to "new_bar")
+                configValues = hashMapOf("foo" to "new_bar")
         )
 
         cache["foo"] shouldNotEqual "new_bar"
@@ -92,8 +127,8 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     fun `should apply the cached config when fetching fails`() {
         val fileName = "cache.json"
         `create cache with fetched config`(
-            file = createFile(fileName),
-            configValues = hashMapOf("foo" to "bar")
+                file = createFile(fileName),
+                configValues = hashMapOf("foo" to "bar")
         )
 
         When calling stubFetcher.fetch() doAnswer {
@@ -121,8 +156,8 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
     fun `should not apply the cached config when verification fails`() {
         val filename = "cache.json"
         `create cache with fetched config`(
-            configValues = hashMapOf("foo" to "bar"),
-            file = createFile(filename)
+                configValues = hashMapOf("foo" to "bar"),
+                file = createFile(filename)
         )
 
         When calling stubVerifier.verify(any()) itReturns false
@@ -162,30 +197,67 @@ class ConfigCacheSpec : RobolectricBaseSpec() {
         cache.getConfig().shouldNotBeEmpty()
         cache["foo"] shouldEqual "bar"
     }
+}
 
-    private fun `create cache with fetched config`(
-        configValues: Map<String, String> = hashMapOf("testKey" to "test_value"),
-        file: File = createFile("cache.json")
-    ): ConfigCache {
-        When calling stubFetcher.fetch() itReturns createConfig(configValues)
-        When calling stubPoller.start(any()) itAnswers {
-            (it.arguments[0] as () -> Unit).invoke()
-        }
+class ConfigCacheFetchConfigSpec : ConfigCacheSpec() {
+
+    @Test
+    fun `should fetch and apply directly with manual trigger`() = runBlockingTest {
+        val filename = "cache.json"
+
+        When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
         When calling stubVerifier.verify(any()) itReturns true
+        When calling stubPoller.start(any()) itAnswers {
+            GlobalScope.launch {
+                delay(1000)
+                (it.arguments[0] as () -> Unit).invoke()
+            }
+        }
 
-        return ConfigCache(stubFetcher, file, stubPoller, stubVerifier, false)
+        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, true)
+        // should not yet be applied because of the delay
+        cache.getConfig().shouldBeEmpty()
+
+        cache.fetchConfig(object : FetchConfigCompletionListener {
+            override fun onFetchError(ex: Exception) {
+                Assert.fail()
+            }
+
+            override fun onFetchComplete(config: Map<String, String>) {
+                cache.getConfig().shouldNotBeEmpty()
+                cache["foo"] shouldEqual "bar"
+            }
+        })
+        advanceTimeBy(1000)
     }
 
-    private fun createConfig(values: Map<String, String>): Config {
-        val body = jsonAdapter<ConfigResponse>()
-            .toJson(ConfigResponse(values, "test_key_id"))
+    @Test
+    @Suppress("TooGenericExceptionThrown")
+    fun `should throw exception with manual trigger`() = runBlockingTest {
+        val filename = "cache.json"
 
-        return Config(
-            rawBody = body,
-            signature = "test_signature",
-            keyId = "test_key_id"
-        )
+        When calling stubFetcher.fetch() itAnswers { throw Exception("fetch error") }
+        When calling stubVerifier.verify(any()) itReturns true
+        When calling stubPoller.start(any()) itAnswers {
+            GlobalScope.launch {
+                delay(1000)
+                (it.arguments[0] as () -> Unit).invoke()
+            }
+        }
+
+        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, true)
+        // should not yet be applied because of the delay
+        cache.getConfig().shouldBeEmpty()
+
+        cache.fetchConfig(object : FetchConfigCompletionListener {
+            override fun onFetchError(ex: Exception) {
+                ex.message shouldEqual "fetch error"
+            }
+
+            override fun onFetchComplete(config: Map<String, String>) {
+                Assert.fail()
+            }
+        })
+        advanceTimeBy(1000)
     }
-
-    private fun createFile(name: String) = File(context.filesDir, name)
 }
