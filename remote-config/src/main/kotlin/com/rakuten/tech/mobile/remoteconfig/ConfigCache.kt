@@ -38,7 +38,11 @@ internal class ConfigCache @VisibleForTesting constructor(
     private var configBody = applyConfig()
 
     init {
-        startPoller(null)
+        try {
+            startPoller()
+        } catch (error: Exception) {
+            Log.e(TAG, "Error while fetching config from server", error)
+        }
     }
 
     operator fun get(key: String) = configBody[key]
@@ -48,7 +52,14 @@ internal class ConfigCache @VisibleForTesting constructor(
     fun fetchConfig(listener: FetchConfigCompletionListener) {
         // For resetting the polling delay.
         poller.stop()
-        startPoller(listener)
+        try {
+            startPoller()
+            configBody = applyConfig()
+            listener.onFetchComplete(configBody)
+        } catch (error: Exception) {
+            Log.e(TAG, "Error while fetching config from server", error)
+            listener.onFetchError(error)
+        }
     }
 
     private fun parseConfigBody(fileText: String) = try {
@@ -76,25 +87,16 @@ internal class ConfigCache @VisibleForTesting constructor(
         emptyMap()
     }
 
-    private fun startPoller(listener: FetchConfigCompletionListener?) {
+    private fun startPoller() {
         poller.start {
-            try {
-                val fetchedConfig = fetcher.fetch()
+            val fetchedConfig = fetcher.fetch()
 
-                verifier.ensureFetchedKey(fetchedConfig.keyId)
+            verifier.ensureFetchedKey(fetchedConfig.keyId)
 
-                if (verifier.verify(fetchedConfig)) file.writeText(fetchedConfig.toJsonString())
+            if (verifier.verify(fetchedConfig)) file.writeText(fetchedConfig.toJsonString())
 
-                if (listener != null) {
-                    // if not null, this execution is from manual trigger.
-                    configBody = applyConfig()
-                    listener.onFetchComplete(configBody)
-                } else if (applyDirectly) {
-                    configBody = applyConfig()
-                }
-            } catch (error: Exception) {
-                Log.e(TAG, "Error while fetching config from server", error)
-                listener?.onFetchError(error)
+            if (applyDirectly) {
+                configBody = applyConfig()
             }
         }
     }
