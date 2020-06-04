@@ -31,9 +31,7 @@ internal class RealRemoteConfig(
     }
 
     override fun getConfig() = cache.getConfig()
-    override fun fetchAndApplyConfig(listener: FetchConfigCompletionListener) {
-        cache.fetchConfig(listener)
-    }
+    override suspend fun fetchAndApplyConfig() = cache.fetchAndApplyConfig()
 
     companion object {
         private const val TAG = "RC_RealRemote"

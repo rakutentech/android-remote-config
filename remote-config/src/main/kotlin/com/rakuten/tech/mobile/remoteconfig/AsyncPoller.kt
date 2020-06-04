@@ -17,8 +17,10 @@ internal class AsyncPoller @VisibleForTesting constructor(
 
     private val delayInMilliseconds = TimeUnit.SECONDS.toMillis(delayInSeconds.toLong())
     private var job: Job? = null
+    private var method: (() -> Unit)? = null
 
     fun start(method: () -> Unit) {
+        this.method = method
         job = scope.launch {
             repeat(Int.MAX_VALUE) {
                 method.invoke()
@@ -28,7 +30,16 @@ internal class AsyncPoller @VisibleForTesting constructor(
         }
     }
 
-    fun stop() {
+    fun reset() {
+        // stop current poller task
         job?.cancel()
+
+        // start with delay
+        if (method != null) {
+            scope.launch {
+                delay(delayInMilliseconds)
+                start(this@AsyncPoller.method!!)
+            }
+        }
     }
 }

@@ -7,6 +7,9 @@ import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import com.squareup.moshi.JsonClass
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import java.io.File
 
 @Suppress("TooGenericExceptionCaught")
@@ -15,7 +18,8 @@ internal class ConfigCache @VisibleForTesting constructor(
     private val file: File,
     private val poller: AsyncPoller,
     private val verifier: ConfigVerifier,
-    private val applyDirectly: Boolean
+    private val applyDirectly: Boolean,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     constructor(
@@ -38,17 +42,28 @@ internal class ConfigCache @VisibleForTesting constructor(
     private var configBody = applyConfig()
 
     init {
-        startPoller()
+        poller.start {
+            try {
+                fetchConfig()
+
+                if (applyDirectly) {
+                    configBody = applyConfig()
+                }
+            } catch (error: Exception) {
+                Log.e(TAG, "Error while fetching config from server", error)
+            }
+        }
     }
 
     operator fun get(key: String) = configBody[key]
 
     fun getConfig(): Map<String, String> = configBody
 
-    fun fetchConfig(listener: FetchConfigCompletionListener) {
-        // For resetting the polling delay.
-        poller.stop()
-        startPoller(listener)
+    suspend fun fetchAndApplyConfig() = withContext(dispatcher) {
+        fetchConfig()
+        configBody = applyConfig()
+        poller.reset() // stop current polled fetch, then restart after interval.
+        configBody
     }
 
     private fun parseConfigBody(fileText: String) = try {
@@ -76,27 +91,13 @@ internal class ConfigCache @VisibleForTesting constructor(
         emptyMap()
     }
 
-    private fun startPoller(listener: FetchConfigCompletionListener? = null) {
-        var currListener = listener
-        poller.start {
-            try {
-                val fetchedConfig = fetcher.fetch()
+    private fun fetchConfig() {
+        val fetchedConfig = fetcher.fetch()
 
-                verifier.ensureFetchedKey(fetchedConfig.keyId)
+        verifier.ensureFetchedKey(fetchedConfig.keyId)
 
-                if (verifier.verify(fetchedConfig)) file.writeText(fetchedConfig.toJsonString())
-
-                if (currListener != null) {
-                    configBody = applyConfig()
-                    currListener?.onFetchComplete(configBody)
-                } else if (applyDirectly) {
-                    configBody = applyConfig()
-                }
-            } catch (error: Exception) {
-                Log.e(TAG, "Error while fetching config from server", error)
-                currListener?.onFetchError(error)
-            }
-            currListener = null // reset listener for next fetch
+        if (verifier.verify(fetchedConfig)) {
+            file.writeText(fetchedConfig.toJsonString())
         }
     }
 

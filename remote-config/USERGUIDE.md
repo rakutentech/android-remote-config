@@ -6,13 +6,19 @@ layout: userguide
 
 Provides remote configuration for Android applications.
 
-## Requirements
+### This page covers:
+* [Requirements](#requirements)
+* [Getting Started](#getting-started)
+* [Advanced Features](#advanced-features)
+* [Change Log](#nchangelog)
+
+## <a name="requirements"></a> Requirements
 
 ### Supported Android Versions
 
 This SDK supports Android API level 21 (Lollipop) and above.
 
-## Getting Started
+## <a name="getting-started"></a> Getting Started
 
 ### #1 Add dependency to your app's `build.gradle`
 
@@ -94,23 +100,25 @@ val testNumber = remoteConfig.getNumber("numberKeyName", 1)
 // Retrieve the entire config as a Map
 val configMap = remoteConfig.getConfig()
 ```
+## <a name="advanced-features"></a> Advanced Features
 
-### #4 Manual Trigger for Fetching Config
+### #1 Manual Trigger for Fetching Config
 Fetching config can be triggered manually by the app. This can be used in cases where updated config is needed when certain events occurred or a specific screen is displayed.
 
 ```kotlin
-remoteConfig.fetchAndApplyConfig(object: FetchConfigCompletionListener {
-  override fun onFetchError(ex: Exception) {
-    // do something with error
+CoroutineScope(Dispatchers.Main).launch {
+  try {
+      val config = withContext(Dispatchers.Default) {
+          // Trigger manual fetch and direct application of config
+          remoteConfig.fetchAndApplyConfig()
+      }
+      // do something with config
+  } catch (ex: Exception) {
+      // do something with exception
   }
-
-  override fun onFetchComplete(config: Map<String, String>)  {
-    // do something with fetched config
-  }
-})
 ```
 
-## Changelog
+## <a name="changelog"></a> Changelog
 
 ### v1.1.0 (in-progress)
 - SDKCF-1991: Add build settings for applying configuration directly after fetching.

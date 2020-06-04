@@ -8,6 +8,7 @@ import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import kotlinx.coroutines.*
+import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.*
 import org.junit.Assert
@@ -203,61 +204,47 @@ class ConfigCacheFetchConfigSpec : ConfigCacheSpec() {
 
     @Test
     fun `should fetch and apply directly with manual trigger`() = runBlockingTest {
-        val filename = "cache.json"
-
         When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
         When calling stubVerifier.verify(any()) itReturns true
-        When calling stubPoller.start(any()) itAnswers {
-            GlobalScope.launch {
+        When calling stubPoller.start(any()) itAnswers { GlobalScope.launch {
                 delay(1000)
-                (it.arguments[0] as () -> Unit).invoke()
-            }
-        }
+                (it.arguments[0] as () -> Unit).invoke() } }
 
-        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, true)
+        val cache = ConfigCache(stubFetcher, createFile("cache.json"), stubPoller, stubVerifier, true,
+                TestCoroutineDispatcher())
         // should not yet be applied because of the delay
         cache.getConfig().shouldBeEmpty()
 
-        cache.fetchConfig(object : FetchConfigCompletionListener {
-            override fun onFetchError(ex: Exception) {
-                Assert.fail()
-            }
-
-            override fun onFetchComplete(config: Map<String, String>) {
-                cache.getConfig().shouldNotBeEmpty()
-                cache["foo"] shouldEqual "bar"
-            }
-        })
-        advanceTimeBy(1000)
+        try {
+            val config = cache.fetchAndApplyConfig()
+            cache.getConfig().shouldNotBeEmpty()
+            cache["foo"] shouldEqual "bar"
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            Assert.fail()
+        }
     }
 
     @Test
     @Suppress("TooGenericExceptionThrown")
     fun `should throw exception with manual trigger`() = runBlockingTest {
-        val filename = "cache.json"
-
         When calling stubFetcher.fetch() itAnswers { throw Exception("fetch error") }
         When calling stubVerifier.verify(any()) itReturns true
-        When calling stubPoller.start(any()) itAnswers {
-            GlobalScope.launch {
+        When calling stubPoller.start(any()) itAnswers { GlobalScope.launch {
                 delay(1000)
-                (it.arguments[0] as () -> Unit).invoke()
-            }
-        }
+                (it.arguments[0] as () -> Unit).invoke() } }
 
-        val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, true)
+        val cache = ConfigCache(stubFetcher, createFile("cache.json"), stubPoller, stubVerifier, true,
+                TestCoroutineDispatcher())
         // should not yet be applied because of the delay
         cache.getConfig().shouldBeEmpty()
 
-        cache.fetchConfig(object : FetchConfigCompletionListener {
-            override fun onFetchError(ex: Exception) {
-                ex.message shouldEqual "fetch error"
-            }
-
-            override fun onFetchComplete(config: Map<String, String>) {
-                Assert.fail()
-            }
-        })
-        advanceTimeBy(1000)
+        try {
+            cache.fetchAndApplyConfig()
+            Assert.fail()
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            cache.getConfig().shouldBeEmpty()
+        }
     }
 }

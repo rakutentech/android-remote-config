@@ -6,9 +6,12 @@ import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import com.rakuten.tech.mobile.remoteconfig.FetchConfigCompletionListener
 import com.rakuten.tech.mobile.remoteconfig.RemoteConfig
 import com.rakuten.tech.mobile.remoteconfig.sample.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity @VisibleForTesting constructor(
     private val remoteConfig: RemoteConfig
@@ -47,20 +50,19 @@ class MainActivity @VisibleForTesting constructor(
 
     fun onGetConfigClick() = showConfigToast("Config") { remoteConfig.getConfig() }
 
-    fun onFetchConfigClick() = remoteConfig.fetchAndApplyConfig(object: FetchConfigCompletionListener {
-        override fun onFetchError(ex: Exception) {
-            displayToast("Error retrieving config values: ${ex.message}")
+    fun onFetchConfigClick() {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val config = withContext(Dispatchers.Default) {
+                    remoteConfig.fetchAndApplyConfig()
+                }
+                Toast.makeText(this@MainActivity, "Config = $config", Toast.LENGTH_SHORT).show()
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                Toast.makeText(this@MainActivity, "test", Toast.LENGTH_SHORT).show()
+            }
         }
-
-        override fun onFetchComplete(config: Map<String, String>) {
-            displayToast("Config = $config")
-        }
-
-        private fun displayToast(message: String) {
-            runOnUiThread { Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()}
-        }
-    })
-
+    }
 
     private fun <T> showConfigToast(title: String, configGetter: () -> T) {
         val message = try {
@@ -72,6 +74,6 @@ class MainActivity @VisibleForTesting constructor(
         }
 
         Toast.makeText(this, message, Toast.LENGTH_SHORT)
-            .show()
+                .show()
     }
 }

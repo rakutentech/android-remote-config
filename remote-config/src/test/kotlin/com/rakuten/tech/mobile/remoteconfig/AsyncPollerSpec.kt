@@ -32,14 +32,25 @@ class AsyncPollerSpec {
     }
 
     @Test
-    fun `should stop poll`() {
+    fun `should reset poll`() {
         var numberOfInvocations = 0
         val poller = AsyncPoller(60, testScope)
 
         poller.start { numberOfInvocations++ }
-        poller.stop()
+        poller.reset()
         testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(5))
 
         numberOfInvocations shouldEqual 1
+    }
+
+    @Test
+    fun `should not throw exception when reset poller before start`() {
+        var numberOfInvocations = 0
+        val poller = AsyncPoller(60, testScope)
+
+        poller.reset()
+        testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(5))
+
+        numberOfInvocations shouldEqual 0
     }
 }
