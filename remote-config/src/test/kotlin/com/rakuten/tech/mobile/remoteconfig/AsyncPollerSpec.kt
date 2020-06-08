@@ -55,4 +55,28 @@ class AsyncPollerSpec {
 
         numberOfInvocations shouldEqual 0
     }
+
+    @Test
+    fun `should set delay to default for zero`() {
+        var numberOfInvocations = 0
+        val poller = AsyncPoller(0, testScope)
+
+        poller.start { numberOfInvocations++ }
+
+        testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(59)) // default delay is 60 mins.
+
+        numberOfInvocations shouldEqual 1
+    }
+
+    @Test
+    fun `should set delay to default for negative`() {
+        var numberOfInvocations = 0
+        val poller = AsyncPoller(-1, testScope)
+
+        poller.start { numberOfInvocations++ }
+
+        testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(59)) // default delay is 60 mins.
+
+        numberOfInvocations shouldEqual 1
+    }
 }
