@@ -11,6 +11,7 @@ import com.nhaarman.mockitokotlin2.argForWhich
 import com.nhaarman.mockitokotlin2.eq
 import com.rakuten.tech.mobile.remoteconfig.jsonMapAdapter
 import junit.framework.TestCase
+import kotlinx.coroutines.test.runBlockingTest
 import okhttp3.*
 import org.amshove.kluent.*
 import org.junit.Before
@@ -119,7 +120,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should fetch the config body`() {
+    fun `should fetch the config body`() = runBlockingTest {
         val fetcher = createFetcher()
         enqueueSuccessResponse(
             body = hashMapOf("foo" to "bar"),
@@ -130,7 +131,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should trim the body`() {
+    fun `should trim the body`() = runBlockingTest {
         val fetcher = createFetcher()
         val body = "\n${createBody(
             body = hashMapOf("foo" to "bar"),
@@ -142,7 +143,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should fetch the config keyId`() {
+    fun `should fetch the config keyId`() = runBlockingTest {
         val fetcher = createFetcher()
         enqueueSuccessResponse(keyId = "test_key_id")
 
@@ -150,7 +151,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should fetch the config signature`() {
+    fun `should fetch the config signature`() = runBlockingTest {
         val fetcher = createFetcher()
         enqueueSuccessResponse(signature = "test_signature")
 
@@ -158,7 +159,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should fetch the config for the provided App Id`() {
+    fun `should fetch the config for the provided App Id`() = runBlockingTest {
         val fetcher = createFetcher(appId = "test-app-id")
         enqueueSuccessResponse()
 
@@ -170,7 +171,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should fetch the config from the 'config' endpoint`() {
+    fun `should fetch the config from the 'config' endpoint`() = runBlockingTest {
         val fetcher = createFetcher()
         enqueueSuccessResponse()
 
@@ -182,7 +183,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should not add app version in request`() {
+    fun `should not add app version in request`() = runBlockingTest {
         When calling mockContext.packageManager itReturns validContext.packageManager
         When calling mockContext.packageName itReturns "invalid.package.name"
         When calling mockContext.resources itReturns resource
@@ -203,7 +204,7 @@ class ConfigFetcherNormalSpec : ConfigFetcherSpec() {
     }
 
     @Test
-    fun `should contain all params in request`() {
+    fun `should contain all params in request`() = runBlockingTest {
         enqueueSuccessResponse()
         createFetcher(context = mockContext).fetch()
 
@@ -236,7 +237,7 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
     }
 
     @Test(expected = IOException::class)
-    fun `should throw when the request is unsuccessful`() {
+    fun `should throw when the request is unsuccessful`() = runBlockingTest {
         val fetcher = createFetcher()
         enqueueErrorResponse(code = 400)
 
@@ -244,7 +245,7 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
     }
 
     @Test(expected = Exception::class)
-    fun `should throw when the 'body' key is missing in response`() {
+    fun `should throw when the 'body' key is missing in response`() = runBlockingTest {
         val fetcher = createFetcher()
         enqueueErrorResponse(
             body = """{"key_id":"test_key_id"}"""
@@ -254,7 +255,7 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
     }
 
     @Test(expected = Exception::class)
-    fun `should throw when the 'keyId' key is missing in response`() {
+    fun `should throw when the 'keyId' key is missing in response`() = runBlockingTest {
         val fetcher = createFetcher()
         enqueueErrorResponse(
             body = """{"body": {}}"""
@@ -265,7 +266,7 @@ class ConfigFetcherErrorSpec : ConfigFetcherSpec() {
 
     @Test
     @Suppress("TooGenericExceptionCaught")
-    fun `should not throw when there are extra keys in the response`() {
+    fun `should not throw when there are extra keys in the response`() = runBlockingTest {
         val fetcher = createFetcher()
         enqueueErrorResponse(
             body = """{

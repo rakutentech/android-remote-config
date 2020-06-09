@@ -18,7 +18,7 @@ internal class ConfigFetcher constructor(
     private val context: Context
 ) {
 
-    fun fetch(): Config {
+    suspend fun fetch(): Config {
         val response = client.fetchPath("app/$appId/config", createParamMap())
 
         if (!response.isSuccessful) {

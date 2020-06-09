@@ -48,7 +48,8 @@ The Remote Config SDK is configured via manifest meta-data, the configurable val
 Notes:
 * We don't currently host a public API, so you will need to provide your own Base URL for API requests.
 * If Config Application is set to `true`, config are applied directly when fetched. Otherwise, fetched config are applied on next app launch from terminated state.
-* By default, config values are fetched from the API at launch time and then periodically fetched again every 60 minutes. Set the Polling delay to the desired interval of fetching config values.
+* By default, config values are fetched from the API at launch time and then periodically fetched again every 60 minutes. Set the Polling Delay to the desired interval of fetching config values.
+* The minimum Polling Delay is 60s. If the value set is less than the minimum, 60s will be used as Polling Delay.
 
 In your `AndroidManifest.xml`:
 

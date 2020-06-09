@@ -6,6 +6,8 @@ import com.nhaarman.mockitokotlin2.mock
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.*
@@ -166,7 +168,7 @@ class RealRemoteConfigFetchConfigSpec : RealRemoteConfigSpec() {
     }
 
     @Suppress("TooGenericExceptionThrown", "LongMethod")
-    private fun createRemoteConfigMockedPoller(
+    private suspend fun createRemoteConfigMockedPoller(
         configValues: Map<String, String> =
                         hashMapOf("test_key" to "test_value", "another_test_key" to "another_test_value"),
         file: File = File(ApplicationProvider.getApplicationContext<Context>().applicationContext.filesDir,
@@ -177,7 +179,9 @@ class RealRemoteConfigFetchConfigSpec : RealRemoteConfigSpec() {
         val stubPoller: AsyncPoller = mock()
         val stubVerifier: ConfigVerifier = mock()
 
-        When calling stubPoller.start(any()) itAnswers { (it.arguments[0] as () -> Unit).invoke() }
+        When calling stubPoller.start(any()) itAnswers {
+            GlobalScope.launch { (it.arguments[0] as suspend () -> Unit).invoke() }
+        }
         When calling stubVerifier.verify(any()) itReturns true
 
         if (isError) {

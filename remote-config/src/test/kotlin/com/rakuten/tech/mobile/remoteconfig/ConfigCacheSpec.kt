@@ -29,9 +29,11 @@ open class ConfigCacheSpec : RobolectricBaseSpec() {
         configValues: Map<String, String> = hashMapOf("testKey" to "test_value"),
         file: File = createFile("cache.json")
     ): ConfigCache {
-        When calling stubFetcher.fetch() itReturns createConfig(configValues)
+        runBlockingTest {
+            When calling stubFetcher.fetch() itReturns createConfig(configValues)
+        }
         When calling stubPoller.start(any()) itAnswers {
-            (it.arguments[0] as () -> Unit).invoke()
+            runBlockingTest { (it.arguments[0] as suspend () -> Unit).invoke() }
         }
         When calling stubVerifier.verify(any()) itReturns true
 
@@ -132,8 +134,10 @@ class ConfigCacheApplyConfigSpec : ConfigCacheSpec() {
                 configValues = hashMapOf("foo" to "bar")
         )
 
-        When calling stubFetcher.fetch() doAnswer {
-            throw IOException("Failed.")
+        runBlockingTest {
+            When calling stubFetcher.fetch() doAnswer {
+                throw IOException("Failed.")
+            }
         }
 
         val cache = ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier, false)
@@ -144,7 +148,9 @@ class ConfigCacheApplyConfigSpec : ConfigCacheSpec() {
     @Test
     fun `should not cache the fetched config when verification fails`() {
         val fileName = "cache.json"
-        When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
+        runBlockingTest {
+            When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
+        }
         When calling stubVerifier.verify(any()) itReturns false
         ConfigCache(stubFetcher, createFile(fileName), stubPoller, stubVerifier, false)
 
@@ -175,7 +181,7 @@ class ConfigCacheApplyConfigSpec : ConfigCacheSpec() {
         When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
         When calling stubVerifier.verify(any()) itReturns true
         When calling stubPoller.start(any()) itAnswers {
-            (it.arguments[0] as () -> Unit).invoke()
+            GlobalScope.launch { (it.arguments[0] as suspend () -> Unit).invoke() }
         }
 
         val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, false)
@@ -184,17 +190,18 @@ class ConfigCacheApplyConfigSpec : ConfigCacheSpec() {
     }
 
     @Test
-    fun `should apply after fetching`() = runBlockingTest {
+    fun `should apply after fetching`() {
         val filename = "cache.json"
 
-        When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
+        runBlockingTest {
+            When calling stubFetcher.fetch() itReturns createConfig(hashMapOf("foo" to "bar"))
+        }
         When calling stubVerifier.verify(any()) itReturns true
         When calling stubPoller.start(any()) itAnswers {
-            (it.arguments[0] as () -> Unit).invoke()
+            runBlockingTest { (it.arguments[0] as suspend () -> Unit).invoke() }
         }
 
         val cache = ConfigCache(stubFetcher, createFile(filename), stubPoller, stubVerifier, true)
-        advanceTimeBy(1000)
         cache.getConfig().shouldNotBeEmpty()
         cache["foo"] shouldEqual "bar"
     }

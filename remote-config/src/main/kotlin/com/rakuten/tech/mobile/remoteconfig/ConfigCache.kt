@@ -60,9 +60,10 @@ internal class ConfigCache @VisibleForTesting constructor(
     fun getConfig(): Map<String, String> = configBody
 
     suspend fun fetchAndApplyConfig() = withContext(dispatcher) {
+        poller.stop() // stop current polled fetch.
         fetchConfig()
         configBody = applyConfig()
-        poller.reset() // stop current polled fetch, then restart after interval.
+        poller.restart() // restart polled fetched with initial interval.
         configBody
     }
 
@@ -91,7 +92,7 @@ internal class ConfigCache @VisibleForTesting constructor(
         emptyMap()
     }
 
-    private fun fetchConfig() {
+    private suspend fun fetchConfig() {
         val fetchedConfig = fetcher.fetch()
 
         verifier.ensureFetchedKey(fetchedConfig.keyId)
