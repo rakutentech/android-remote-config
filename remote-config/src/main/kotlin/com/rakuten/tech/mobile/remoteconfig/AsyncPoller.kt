@@ -22,6 +22,7 @@ internal class AsyncPoller @VisibleForTesting constructor(
     }
 
     private var job: Job? = null
+    private var restartJob: Job? = null
     private var method: (suspend () -> Unit)? = null
 
     fun start(method: suspend () -> Unit) {
@@ -38,12 +39,13 @@ internal class AsyncPoller @VisibleForTesting constructor(
     fun stop() {
         // stop current poller task
         job?.cancel()
+        restartJob?.cancel()
     }
 
     fun restart() {
         // restart stopped job with delay
         if (method != null && job?.isActive == false) {
-            scope.launch {
+            restartJob = scope.launch {
                 delay(delayInMilliseconds)
                 start(this@AsyncPoller.method!!)
             }
