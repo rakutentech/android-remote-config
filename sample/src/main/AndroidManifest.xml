@@ -30,7 +30,7 @@
 
     <meta-data
       android:name="com.rakuten.tech.mobile.remoteconfig.PollingDelay"
-      android:value="30" />
+      android:value="60" />
 
     <activity android:name=".MainActivity">
       <intent-filter>
