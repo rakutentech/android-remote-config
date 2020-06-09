@@ -12,7 +12,7 @@ class AsyncPollerSpec {
     @Test
     fun `should invoke the provided function`() {
         var numberOfInvocations = 0
-        val poller = AsyncPoller(60, testScope)
+        val poller = AsyncPoller(60, testScope) // minimum
 
         poller.start { numberOfInvocations++ }
 
@@ -22,13 +22,13 @@ class AsyncPollerSpec {
     @Test
     fun `should poll at the specified interval`() {
         var numberOfInvocations = 0
-        val poller = AsyncPoller(60, testScope)
+        val poller = AsyncPoller(120, testScope) // greater than minimum
 
         poller.start { numberOfInvocations++ }
 
-        testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(5))
+        testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(6))
 
-        numberOfInvocations shouldEqual 6
+        numberOfInvocations shouldEqual 4
     }
 
     @Test
@@ -57,25 +57,25 @@ class AsyncPollerSpec {
     }
 
     @Test
-    fun `should set delay to default for zero`() {
+    fun `should set delay to minimum if less than minimum`() {
         var numberOfInvocations = 0
-        val poller = AsyncPoller(0, testScope)
+        val poller = AsyncPoller(30, testScope) // minimum is 60s
 
         poller.start { numberOfInvocations++ }
 
-        testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(59)) // default delay is 60 mins.
+        testScope.advanceTimeBy(TimeUnit.SECONDS.toMillis(59))
 
         numberOfInvocations shouldEqual 1
     }
 
     @Test
-    fun `should set delay to default for negative`() {
+    fun `should set delay to minimum for negative`() {
         var numberOfInvocations = 0
-        val poller = AsyncPoller(-1, testScope)
+        val poller = AsyncPoller(-1, testScope) // minimum is 60s
 
         poller.start { numberOfInvocations++ }
 
-        testScope.advanceTimeBy(TimeUnit.MINUTES.toMillis(59)) // default delay is 60 mins.
+        testScope.advanceTimeBy(TimeUnit.SECONDS.toMillis(59))
 
         numberOfInvocations shouldEqual 1
     }

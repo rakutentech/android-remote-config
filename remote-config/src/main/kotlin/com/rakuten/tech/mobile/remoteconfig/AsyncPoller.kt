@@ -15,8 +15,8 @@ internal class AsyncPoller @VisibleForTesting constructor(
 
     constructor(delayInSeconds: Int) : this(delayInSeconds, GlobalScope)
 
-    private val delayInMilliseconds = if (delayInSeconds <= 0) {
-        TimeUnit.SECONDS.toMillis(DEFAULT_DELAY.toLong())
+    private val delayInMilliseconds = if (delayInSeconds < MIN_DELAY) {
+        TimeUnit.SECONDS.toMillis(MIN_DELAY.toLong())
     } else {
         TimeUnit.SECONDS.toMillis(delayInSeconds.toLong())
     }
@@ -49,6 +49,6 @@ internal class AsyncPoller @VisibleForTesting constructor(
     }
 
     companion object {
-        private const val DEFAULT_DELAY = 3600 // in secs.
+        private const val MIN_DELAY = 60 // in secs.
     }
 }
