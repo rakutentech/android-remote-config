@@ -18,7 +18,7 @@ internal class ConfigFetcher constructor(
     private val context: Context
 ) {
 
-    fun fetch(): Config {
+    suspend fun fetch(): Config {
         val response = client.fetchPath("app/$appId/config", createParamMap())
 
         if (!response.isSuccessful) {
@@ -41,7 +41,7 @@ internal class ConfigFetcher constructor(
             val pInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             paramMap[PARAM_KEY_APP_VERSION] = pInfo.versionName
         } catch (e: PackageManager.NameNotFoundException) {
-            Log.d(SDK_NAME, e.localizedMessage.toString())
+            Log.d(TAG, e.localizedMessage.toString())
         }
 
         paramMap[PARAM_KEY_OS_VERSION] = Build.VERSION.RELEASE
@@ -68,7 +68,7 @@ internal class ConfigFetcher constructor(
         private const val PARAM_KEY_OS_VERSION = "osVersion"
         private const val PARAM_KEY_LANGUAGE = "language"
         private const val PARAM_KEY_COUNTRY = "country"
-        private const val SDK_NAME = "Remote Config"
+        private const val TAG = "RC_ConfigFetcher"
     }
 }
 

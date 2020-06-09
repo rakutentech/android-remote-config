@@ -1,5 +1,7 @@
 package com.rakuten.tech.mobile.remoteconfig
 
+import java.lang.Exception
+
 /**
  * Main entry point for the Remote Config SDK.
  * Should be accessed via [RemoteConfig.instance].
@@ -48,6 +50,15 @@ abstract class RemoteConfig internal constructor() {
      */
     abstract fun getConfig(): Map<String, String>
 
+    /**
+     * This method is the manual trigger for fetching config values.
+     * Config values are applied directly after fetch.
+     *
+     * @return [Map] contains the fetched config
+     */
+    @Throws(Exception::class)
+    abstract suspend fun fetchAndApplyConfig(): Map<String, String>
+
     companion object {
         private var instance: RemoteConfig = NotInitializedRemoteConfig()
 
@@ -71,4 +82,5 @@ internal class NotInitializedRemoteConfig : RemoteConfig() {
     override fun getBoolean(key: String, fallback: Boolean): Boolean = fallback
     override fun <T : Number> getNumber(key: String, fallback: T) = fallback
     override fun getConfig() = emptyMap<String, String>()
+    override suspend fun fetchAndApplyConfig() = emptyMap<String, String>()
 }

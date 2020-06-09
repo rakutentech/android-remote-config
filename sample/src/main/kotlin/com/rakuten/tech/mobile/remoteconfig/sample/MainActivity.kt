@@ -8,6 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.rakuten.tech.mobile.remoteconfig.RemoteConfig
 import com.rakuten.tech.mobile.remoteconfig.sample.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity @VisibleForTesting constructor(
     private val remoteConfig: RemoteConfig
@@ -46,6 +50,20 @@ class MainActivity @VisibleForTesting constructor(
 
     fun onGetConfigClick() = showConfigToast("Config") { remoteConfig.getConfig() }
 
+    fun onFetchConfigClick() {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val config = withContext(Dispatchers.Default) {
+                    remoteConfig.fetchAndApplyConfig()
+                }
+                Toast.makeText(this@MainActivity, "Config = $config", Toast.LENGTH_SHORT).show()
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                Toast.makeText(this@MainActivity, "test", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun <T> showConfigToast(title: String, configGetter: () -> T) {
         val message = try {
             "$title = ${configGetter.invoke()}"
@@ -56,6 +74,6 @@ class MainActivity @VisibleForTesting constructor(
         }
 
         Toast.makeText(this, message, Toast.LENGTH_SHORT)
-            .show()
+                .show()
     }
 }

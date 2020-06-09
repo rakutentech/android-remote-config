@@ -43,11 +43,11 @@ class RemoteConfigInitProvider : ContentProvider() {
 
         /**
          * Delay in minutes between polls to the Config API.
-         * Set to 60 minutes by default.
+         * Set to 3600 secs by default.
          **/
         @MetaData(
-            key = "com.rakuten.tech.mobile.ras.PollingDelay",
-            value = "60"
+            key = "com.rakuten.tech.mobile.remoteconfig.PollingDelay",
+            value = "3600"
         )
         fun pollingDelay(): Int
 

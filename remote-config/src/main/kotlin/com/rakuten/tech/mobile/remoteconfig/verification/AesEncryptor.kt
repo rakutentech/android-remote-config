@@ -31,11 +31,7 @@ internal class AesEncryptor @VisibleForTesting constructor(
             keyStore.getEntry(KEYSTORE_ALIAS, null) as KeyStore.SecretKeyEntry?
         } catch (exception: ClassCastException) {
             // Key wasn't an AES key, so we need to generate a new one
-            Log.d(
-                "Remote Config",
-                "Error retrieving key from KeyStore. A new key will be generated.",
-                exception
-            )
+            Log.d(TAG, "Error retrieving key from KeyStore. A new key will be generated.", exception)
             null
         }
     )?.secretKey ?: keyGenerator.generateKey()
@@ -68,6 +64,7 @@ internal class AesEncryptor @VisibleForTesting constructor(
     }
 
     companion object {
+        private const val TAG = "RC_AES"
         private const val KEYSTORE_ALIAS = "remote-config-public-key-encryption-decryption"
         private const val CIPHER_TRANSFORMATION = "AES/GCM/NoPadding"
         private const val GCM_TAG_LENGTH = 128
