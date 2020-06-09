@@ -101,6 +101,14 @@
       android:layout_height="wrap_content"
       android:onClick="@{() -> activity.onGetConfigClick()}"
       android:text="Get Config"/>
+    <Button
+      android:id="@+id/fetchButton"
+      app:layout_constraintTop_toBottomOf="@+id/configButton"
+      android:textStyle="bold"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:onClick="@{() -> activity.onFetchConfigClick()}"
+      android:text="Fetch and Apply Config"/>
 
   </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

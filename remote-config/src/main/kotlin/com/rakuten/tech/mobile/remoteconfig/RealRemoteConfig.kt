@@ -24,11 +24,16 @@ internal class RealRemoteConfig(
                 else -> value.toInt() as T
             }
         } catch (e: NumberFormatException) {
-            Log.e("RemoteConfig", "Error parsing number from config", e)
+            Log.e(TAG, "Error parsing number from config", e)
 
             fallback
         }
     }
 
     override fun getConfig() = cache.getConfig()
+    override suspend fun fetchAndApplyConfig() = cache.fetchAndApplyConfig()
+
+    companion object {
+        private const val TAG = "RC_RealRemote"
+    }
 }

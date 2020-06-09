@@ -23,13 +23,17 @@ internal class ConfigVerifier @VisibleForTesting constructor(
 
             if (isVerified) true else throw InvalidSignatureException()
         } catch (exception: Exception) {
-            Log.e("Remote Config", "Failed to verify signature of config.", exception)
+            Log.e(TAG, "Failed to verify signature of config.", exception)
             cache.remove(config.keyId)
             false
         }
     }
 
     fun ensureFetchedKey(keyId: String) = cache[keyId] ?: cache.fetch(keyId)
+
+    companion object {
+        private const val TAG = "RC_ConfigVerifier"
+    }
 }
 
 internal class InvalidSignatureException : Exception("Signature was invalid.")

@@ -7,15 +7,19 @@ import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
 import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
 import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
 import com.squareup.moshi.JsonClass
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import java.io.File
 
 @Suppress("TooGenericExceptionCaught")
 internal class ConfigCache @VisibleForTesting constructor(
-    fetcher: ConfigFetcher,
+    private val fetcher: ConfigFetcher,
     private val file: File,
-    poller: AsyncPoller,
+    private val poller: AsyncPoller,
     private val verifier: ConfigVerifier,
-    applyDirectly: Boolean
+    private val applyDirectly: Boolean,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     constructor(
@@ -40,18 +44,13 @@ internal class ConfigCache @VisibleForTesting constructor(
     init {
         poller.start {
             try {
-                val fetchedConfig = fetcher.fetch()
+                fetchConfig()
 
-                verifier.ensureFetchedKey(fetchedConfig.keyId)
-
-                if (verifier.verify(fetchedConfig)) {
-                    file.writeText(fetchedConfig.toJsonString())
-                }
                 if (applyDirectly) {
                     configBody = applyConfig()
                 }
             } catch (error: Exception) {
-                Log.e("RemoteConfig", "Error while fetching config from server", error)
+                Log.e(TAG, "Error while fetching config from server", error)
             }
         }
     }
@@ -59,6 +58,14 @@ internal class ConfigCache @VisibleForTesting constructor(
     operator fun get(key: String) = configBody[key]
 
     fun getConfig(): Map<String, String> = configBody
+
+    suspend fun fetchAndApplyConfig() = withContext(dispatcher) {
+        poller.stop() // stop current polled fetch.
+        fetchConfig()
+        configBody = applyConfig()
+        poller.restart() // restart polled fetched with initial interval.
+        configBody
+    }
 
     private fun parseConfigBody(fileText: String) = try {
         val config = Config.fromJsonString(fileText)
@@ -69,7 +76,7 @@ internal class ConfigCache @VisibleForTesting constructor(
             null
         }
     } catch (exception: Exception) {
-        Log.e("RemoteConfig", "Error parsing config from cached file", exception)
+        Log.e(TAG, "Error parsing config from cached file", exception)
         null
     }
 
@@ -83,6 +90,20 @@ internal class ConfigCache @VisibleForTesting constructor(
         }
     } else {
         emptyMap()
+    }
+
+    private suspend fun fetchConfig() {
+        val fetchedConfig = fetcher.fetch()
+
+        verifier.ensureFetchedKey(fetchedConfig.keyId)
+
+        if (verifier.verify(fetchedConfig)) {
+            file.writeText(fetchedConfig.toJsonString())
+        }
+    }
+
+    companion object {
+        private const val TAG = "RC_ConfigCache"
     }
 }
 

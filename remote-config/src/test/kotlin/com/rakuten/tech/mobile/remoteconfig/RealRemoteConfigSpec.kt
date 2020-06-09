@@ -1,19 +1,30 @@
 package com.rakuten.tech.mobile.remoteconfig
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.nhaarman.mockitokotlin2.mock
-import org.amshove.kluent.When
-import org.amshove.kluent.calling
-import org.amshove.kluent.itReturns
-import org.amshove.kluent.shouldEqual
+import com.rakuten.tech.mobile.remoteconfig.api.ConfigFetcher
+import com.rakuten.tech.mobile.remoteconfig.api.ConfigResponse
+import com.rakuten.tech.mobile.remoteconfig.verification.ConfigVerifier
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.runBlockingTest
+import org.amshove.kluent.*
+import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
+import java.io.File
 
 @Ignore
 open class RealRemoteConfigSpec : RobolectricBaseSpec() {
 
     private val stubCache: ConfigCache = mock()
 
-    internal fun createRemoteConfig(vararg keyValues: Pair<String, String>): RealRemoteConfig {
+    @Suppress("TooGenericExceptionThrown")
+    internal fun createRemoteConfig(
+        vararg keyValues: Pair<String, String>
+    ): RealRemoteConfig {
         for (entry in keyValues.asList()) {
             When calling stubCache[entry.first] itReturns entry.second
         }
@@ -124,5 +135,73 @@ class RealRemoteConfigGetConfigSpec : RealRemoteConfigSpec() {
 
         remoteConfig.getConfig()["test_key"] shouldEqual "test_value"
         remoteConfig.getConfig()["another_test_key"] shouldEqual "another_test_value"
+    }
+}
+
+class RealRemoteConfigFetchConfigSpec : RealRemoteConfigSpec() {
+    @Test
+    fun `should fetch config`() = runBlockingTest {
+        val remoteConfig = createRemoteConfigMockedPoller()
+        remoteConfig.getConfig().shouldBeEmpty()
+
+        try {
+            val config = remoteConfig.fetchAndApplyConfig()
+            config["test_key"] shouldEqual "test_value"
+            config["another_test_key"] shouldEqual "another_test_value"
+            System.out.println("test")
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            Assert.fail()
+        }
+    }
+
+    @Test
+    fun `should return error when fetching config`() = runBlockingTest {
+        val remoteConfig = createRemoteConfigMockedPoller(isError = true)
+        remoteConfig.getConfig().shouldBeEmpty() // config is not yet applied.
+        try {
+            remoteConfig.fetchAndApplyConfig()
+            Assert.fail()
+        } catch (ex: Exception) {
+            ex.message shouldEqual "fetch error"
+        }
+    }
+
+    @Suppress("TooGenericExceptionThrown", "LongMethod")
+    private suspend fun createRemoteConfigMockedPoller(
+        configValues: Map<String, String> =
+                        hashMapOf("test_key" to "test_value", "another_test_key" to "another_test_value"),
+        file: File = File(ApplicationProvider.getApplicationContext<Context>().applicationContext.filesDir,
+                "cache.json"),
+        isError: Boolean = false
+    ): RealRemoteConfig {
+        val stubFetcher: ConfigFetcher = mock()
+        val stubPoller: AsyncPoller = mock()
+        val stubVerifier: ConfigVerifier = mock()
+
+        When calling stubPoller.start(any()) itAnswers {
+            GlobalScope.launch { (it.arguments[0] as suspend () -> Unit).invoke() }
+        }
+        When calling stubVerifier.verify(any()) itReturns true
+
+        if (isError) {
+            When calling stubFetcher.fetch() itAnswers { throw Exception("fetch error") }
+        } else {
+            When calling stubFetcher.fetch() itReturns createConfig(configValues)
+        }
+
+        return RealRemoteConfig(ConfigCache(stubFetcher, file, stubPoller, stubVerifier, false,
+                TestCoroutineDispatcher()))
+    }
+
+    private fun createConfig(values: Map<String, String>): Config {
+        val body = jsonAdapter<ConfigResponse>()
+                .toJson(ConfigResponse(values, "test_key_id"))
+
+        return Config(
+                rawBody = body,
+                signature = "test_signature",
+                keyId = "test_key_id"
+        )
     }
 }
