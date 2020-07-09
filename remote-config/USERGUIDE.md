@@ -10,7 +10,7 @@ Provides remote configuration for Android applications.
 * [Requirements](#requirements)
 * [Getting Started](#getting-started)
 * [Advanced Features](#advanced-features)
-* [Change Log](#nchangelog)
+* [Change Log](#changelog)
 
 ## <a name="requirements"></a> Requirements
 
@@ -121,7 +121,7 @@ CoroutineScope(Dispatchers.Main).launch {
 
 ## <a name="changelog"></a> Changelog
 
-### v1.1.0 (in-progress)
+### v1.1.0 (2020-07-09)
 - SDKCF-1991: Add build settings for applying configuration directly after fetching.
 - SDKCF-2457: Add build settings for config fetching frequency, and new API for manual trigger for fetching config.
 
