@@ -1,5 +1,4 @@
 apply from: '../config/android/library.gradle'
-apply from: '../config/documentation/dokka/android.gradle'
 apply plugin: "kotlin-android"
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
@@ -17,13 +16,6 @@ android {
 
   defaultConfig {
     consumerProguardFiles 'proguard-rules.pro'
-  }
-
-  buildTypes {
-    release {
-      useProguard true
-      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-    }
   }
 }
 
@@ -74,4 +66,13 @@ apply from: "../config/quality/detekt/android.gradle"
 dependencies {
   // Enable the KtLint rules
   detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:1.1.1"
+}
+
+apply from: '../config/documentation/dokka/android.gradle'
+dokka {
+  configuration {
+    sourceRoot {
+      path = "remote-config/src/main"
+    }
+  }
 }
