@@ -40,12 +40,12 @@ dependencies {
   testImplementation 'androidx.test:core:1.0.0'
 }
 
-apply from: '../gradle/documentation.gradle'
-
-apply from: '../gradle/maven-publication.gradle'
-publishing {
-  publications {
-    RemoteConfig(MavenPublication, androidArtifact())
+apply from: '../config/publish/android.gradle'
+afterEvaluate {
+  publishing {
+    publications {
+      RemoteConfig(MavenPublication, androidArtifact())
+    }
   }
 }
 
@@ -66,4 +66,13 @@ apply from: "../config/quality/detekt/android.gradle"
 dependencies {
   // Enable the KtLint rules
   detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:1.1.1"
+}
+
+apply from: '../config/documentation/dokka/android.gradle'
+dokka {
+  configuration {
+    sourceRoot {
+      path = "remote-config/src/main"
+    }
+  }
 }
