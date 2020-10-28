@@ -13,8 +13,19 @@ jobs:
     
     - name: Set SDK env var
       id: set_android_sdk
-      run: |
-        echo "ANDROID_SDK_ROOT=${HOME}/Library/Android/sdk" >> $GITHUB_ENV
+      run: echo "ANDROID_SDK_ROOT=${HOME}/Library/Android/sdk" >> $GITHUB_ENV
+        
+    - name: git submodules
+      id: git_submodules
+      run: git submodule update --init
+    
+    - name: Download Dependencies
+      id: depedencies
+      run: ./gradlew androidDependencies
+
+    - name: Assemble AAR
+      id: assemble_aar
+      run: ./gradlew assemble
 
     - name: Perform Scan
       uses: ShiftLeftSecurity/scan-action@master
