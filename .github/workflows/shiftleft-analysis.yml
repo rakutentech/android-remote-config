@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
+    
+    - name: Set SDK env var
+    id: set_android_sdk
+    run: |
+        echo "ANDROID_SDK_ROOT=${HOME}/Library/Android/sdk" >> $GITHUB_ENV
 
     - name: Perform Scan
       uses: ShiftLeftSecurity/scan-action@master
